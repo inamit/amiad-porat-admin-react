@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import {
   setPersistence,
   browserLocalPersistence,
@@ -39,6 +40,11 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
+
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LdQPbkhAAAAAH0R1pu-2gijKr5MhBYfQTiGT6v-'),
+  isTokenAutoRefreshEnabled: true
+});
 
 if (process.env.NODE_ENV === 'development') {
   console.log(firebaseConfig);
