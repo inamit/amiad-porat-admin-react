@@ -32,8 +32,7 @@ const AddUser = () => {
     phoneNumber: '',
     birthDate: undefined,
     password: '',
-    role: 1,
-    subjects: []
+    role: undefined
   };
   const [user, setUser] = React.useState<AddUserForm>(initialValues);
   const [validationErrors, setValidationErrors] = React.useState<{
@@ -76,30 +75,9 @@ const AddUser = () => {
       .reduce((acc, field) => isFieldValid(field, false) && acc, true);
   };
 
-  const removeHiddenFieldsFromObjects = (userToSend: AddUserForm) => {
-    addUserFields
-      .filter(
-        (field) =>
-          field.showConditions
-            ?.map(
-              (condition) =>
-                !eval(
-                  userToSend[condition.field] +
-                    condition.operator +
-                    condition.value
-                )
-            )
-            .reduce((final, curr) => final && curr) ?? true
-      )
-      .forEach((field) => {
-        delete userToSend[field.objectLocation];
-      });
-  };
-
   const createUser = httpsCallable(functions, 'createUser');
   const addUser = async () => {
     const userToSend = { ...user };
-    removeHiddenFieldsFromObjects(userToSend);
 
     try {
       MySwal.showLoading();

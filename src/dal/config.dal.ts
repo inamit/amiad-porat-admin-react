@@ -2,6 +2,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig.js';
 
 const gradesCollectionName = 'grades';
+const subjectsCollectionName = 'subjects';
 
 export const getGrades = async () => {
   const gradesSnapshot = await getDocs(collection(db, gradesCollectionName));
@@ -9,4 +10,14 @@ export const getGrades = async () => {
   return gradesSnapshot.docs
     .map((doc) => ({ label: doc.get('label'), value: parseInt(doc.id) }))
     .sort((first, second) => first.value - second.value);
+};
+
+export const getSubjects = async () => {
+  const subjectsSnapshot = await getDocs(
+    collection(db, subjectsCollectionName)
+  );
+
+  return subjectsSnapshot.docs.map(
+    (doc) => doc.data() as { label: string; value: string }
+  );
 };
