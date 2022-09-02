@@ -1,5 +1,5 @@
 import { getUserByID } from 'dal/users.dal';
-import { FirestoreDataConverter } from 'firebase/firestore';
+import { DocumentData, FirestoreDataConverter } from 'firebase/firestore';
 import User from './user';
 
 export default class Group {
@@ -45,6 +45,20 @@ export default class Group {
   }
 }
 
+export const getGroupFromFirebaseDocumentData = (
+  id: string,
+  data: DocumentData
+) => {
+  return Group.initAndFetch(
+    id,
+    data.name,
+    data.teacher,
+    data.subject,
+    data.dayInWeek,
+    data.hour
+  );
+};
+
 export const groupConverter: FirestoreDataConverter<Group> = {
   toFirestore: (group: Group) => {
     return {
@@ -55,13 +69,6 @@ export const groupConverter: FirestoreDataConverter<Group> = {
   fromFirestore: (snapshot, options) => {
     const data = snapshot.data(options);
 
-    return Group.initAndFetch(
-      snapshot.id,
-      data.name,
-      data.teacher,
-      data.subject,
-      data.dayInWeek,
-      data.hour
-    );
+    return getGroupFromFirebaseDocumentData(snapshot.id, data);
   }
 };

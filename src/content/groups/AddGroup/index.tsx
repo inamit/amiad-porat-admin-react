@@ -8,24 +8,31 @@ import {
   Button
 } from '@mui/material';
 import GenericFormFields from 'components/GenericFormFields';
+import { createNewGroup } from 'dal/groups.dal';
+import { getDoc } from 'firebase/firestore';
 import { Subjects } from 'models/enums/subjects';
 import { FormFieldType } from 'models/fieldsConfigs';
+import Group, { groupConverter } from 'models/group';
 import React, { useEffect } from 'react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { addGroupFields } from './addGroupFields';
 import { AddGroupModel } from './addGroupModel';
 
 interface AddGroupProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (addedGroup?: Group) => void;
 }
 
 const AddGroup = (props: AddGroupProps) => {
+  const MySwal = withReactContent(Swal);
+
   const initialGroup: AddGroupModel = {
     name: '',
     teacher: '',
     subject: Subjects.MATH.value,
     dayInWeek: undefined,
-    hour: ''
+    hour: undefined
   };
   const [group, setGroup] = React.useState<AddGroupModel>(initialGroup);
   const [validationErrors, setValidationErrors] = React.useState<{
@@ -34,7 +41,7 @@ const AddGroup = (props: AddGroupProps) => {
   const [valid, setValid] = React.useState<boolean>(false);
 
   useEffect(() => {
-    setValid(areFieldsValid());
+    setValid(areFieldsValid(false));
   }, [group]);
 
   const isFieldValid = (field: FormFieldType, addToList: boolean = true) => {
@@ -53,7 +60,7 @@ const AddGroup = (props: AddGroupProps) => {
     return validationResult.error?.message === undefined;
   };
 
-  const areFieldsValid = () => {
+  const areFieldsValid = (setMessages: boolean) => {
     return addGroupFields
       .filter(
         (field) =>
@@ -65,11 +72,28 @@ const AddGroup = (props: AddGroupProps) => {
             )
             .reduce((final, curr) => final && curr) ?? true
       )
-      .reduce((acc, field) => isFieldValid(field, false) && acc, true);
+      .reduce((acc, field) => isFieldValid(field, setMessages) && acc, true);
   };
 
-  const addGroup = () => {
-    alert('FORM IS VALID AND SUBMITTED');
+  const addGroup = async () => {
+    try {
+      MySwal.showLoading();
+      const docRef = (await createNewGroup(group)).withConverter(
+        groupConverter
+      );
+      const doc = await getDoc(docRef);
+      MySwal.hideLoading();
+      MySwal.fire({ title: 'השיעור נוסף', icon: 'success' });
+
+      props.onClose(doc.data());
+    } catch (error) {
+      MySwal.hideLoading();
+      MySwal.fire({
+        title: 'לא היה ניתן להוסיף את השיעור',
+        text: error.message,
+        icon: 'error'
+      });
+    }
   };
 
   return (
@@ -82,9 +106,9 @@ const AddGroup = (props: AddGroupProps) => {
             '&': {
               display: 'flex',
               flexDirection: 'column',
-              alignContent: 'center'
+              alignContent: 'center',
+              paddingTop: '3px'
             },
-            // '& .MuiFormControl-root': { alignSelf: 'center' },
             '& .MuiTextField-root': { marginBottom: '3vh', width: '100%' }
           }}
           noValidate
@@ -101,7 +125,7 @@ const AddGroup = (props: AddGroupProps) => {
             sx={{ '&': { alignSelf: 'center' } }}
             disabled={!valid}
             onClick={() => {
-              areFieldsValid() && addGroup();
+              areFieldsValid(true) && addGroup();
             }}
             variant="contained"
           >

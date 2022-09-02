@@ -3,5 +3,5 @@ export interface AddGroupModel {
   teacher: string;
   subject: string;
   dayInWeek: number;
-  hour: string;
+  hour: Date;
 }
