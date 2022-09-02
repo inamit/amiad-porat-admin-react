@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const isDateRequired = (
-  value: string,
+  value: Date,
   fieldName: string
 ): Joi.ValidationResult => {
   return Joi.date()
