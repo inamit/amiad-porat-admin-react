@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	function userRole() {
+    	return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+    	return request.auth != null && userRole() == 4;
+    }
+    
+    match /grades/{document=**} {
+    	allow read: if request.auth.uid != null;
+    	allow write: if isAdmin();
+    }
+    
+    match /rooms/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    match /users {
+    	allow write: if isAdmin();
+      match /{userId} {
+      	allow write: if isAdmin() || request.auth.uid == userId;
+      	allow read: if isAdmin() || request.auth.uid == userId || userId == get(/databases/$(database)/documents/groups/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.group)).data.teacher;
+      }
+    }
+    match /groups/{groupId} {
+    	allow write: if isAdmin();
+      allow read: if isAdmin() || (request.auth.uid != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.group == groupId);
+    }
+    
+    match /lessons/{lessonId} {
+    	allow read, write: if request.auth != null;
+//     	allow read, write: if isAdmin();
+
+//       match /date {
+//         allow read: if request.auth != null;
+//       }
+
+//       match /subject {
+//         allow read: if request.auth != null;
+//       }
+
+//       match /isOpen {
+//         allow read: if request.auth != null;
+//       }
+
+//       match /students {
+//         allow read, write: if request.auth != null;
+//         // allow update: if 
+//         //   isAdmin() || // an admin can do anything
+//         //   (
+//         //     request.auth != null && // restrictions for non admin users
+//         //     (
+//         //       (
+//         //         // User adds himself to a lesson
+//         //         request.resource.data.hasAll(resource.data) && // check the user didn't change anyone else
+//         //         request.resource.data.hasAll([request.auth.uid]) && // check the user added himself only
+//         //         request.resource.data.size() == resource.data.size() + 1 // check the size is bigger by 1
+//         //       ) ||
+//         //       (
+//         //         // User removes himself from a lesson
+//         //         resource.data.hasAll(request.resource.data) &&  // check the user didn't change anyone else
+//         //         resource.data.hasAll([request.auth.uid]) && // check the user is already in the lesson
+//         //         !request.data.hasAll([request.auth.uid]) && // check the user removed himself only
+//         //         request.resource.data.size() == resource.data.size() - 1 // check the size is smaller by 1
+//         //       ) ||
+//         //       (
+//         //         // User is already in the lesson
+//         //         request.resource.data.hasAll(resource.data) &&
+//         //         request.resource.data.size() == resource.data.size()
+//         //       )
+//         //     )
+//         //   )
+//       }
+    }
+  }
+}
