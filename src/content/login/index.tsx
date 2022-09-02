@@ -42,7 +42,7 @@ const Login = () => {
       // maybe trigger a loading screen
       return;
     }
-    if (user) navigate((state as any).from);
+    if (user) navigate((state as any)?.from ?? '/users');
   }, [user, loading]);
 
   const signIn = async () => {
