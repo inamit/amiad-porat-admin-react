@@ -83,7 +83,6 @@ const FormField = <T,>({
               onBlur={() => {
                 isFieldValid(field);
               }}
-              disabled
               error={Boolean(validationErrors[field.objectLocation])}
               helperText={validationErrors[field.objectLocation]}
               {...params}
@@ -97,7 +96,7 @@ const FormField = <T,>({
         <TextFieldSelect
           key={field.objectLocation}
           field={field}
-          value={formValues[field.objectLocation] ?? ''}
+          value={formValues[field.objectLocation]}
           error={Boolean(validationErrors[field.objectLocation])}
           helperText={validationErrors[field.objectLocation]}
           onBlur={() => {
@@ -117,7 +116,7 @@ const FormField = <T,>({
         <TextFieldAsyncSelect
           key={field.objectLocation}
           field={field}
-          value={formValues[field.objectLocation] ?? ''}
+          value={formValues[field.objectLocation]}
           error={Boolean(validationErrors[field.objectLocation])}
           helperText={validationErrors[field.objectLocation]}
           onBlur={() => {
@@ -134,7 +133,16 @@ const FormField = <T,>({
       break;
     case FieldType.RADIO_GROUP:
       fieldToShow = (
-        <FormControl>
+        <FormControl
+          sx={{
+            '&': {
+              paddingBottom: '30px',
+              alignSelf: 'center',
+              display: 'flex',
+              alignItems: 'center'
+            }
+          }}
+        >
           <FormLabel id={field.objectLocation + '-group-label'}>
             {field.placeholder}
           </FormLabel>
@@ -157,6 +165,7 @@ const FormField = <T,>({
           >
             {(field as RadioFormField).children.map((child) => (
               <FormControlLabel
+                key={child.value}
                 value={child.value}
                 control={<Radio />}
                 label={child.label}

@@ -72,7 +72,9 @@ const TextFieldSelect = (props: TextFieldSelectProps) => {
         labelId={field.objectLocation + '-select-label'}
         id={field.objectLocation + '-select'}
         multiple={field.multiple}
-        value={props.value}
+        value={
+          props.value !== undefined ? props.value : field.multiple ? [] : ''
+        }
         onChange={props.onChange}
         onFocus={shrinkLabel}
         onBlur={unShrinkLabel}
