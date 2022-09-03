@@ -40,8 +40,8 @@ import {
   Select,
   Tooltip
 } from '@mui/material';
-import { getGroupsForSelect } from 'dal/groups.dal';
-import { EnumValue } from 'models/enums/enum';
+import { getAllGroups } from 'dal/groups.dal';
+import Group from 'models/group';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -166,26 +166,6 @@ const SubjectsMultiSelectComponent = (props) => {
       </FormControl>
     </div>
   );
-  //   return (
-  //     <StoreField
-  //       childClass={TextFieldSelect}
-  //       field={
-  //         {
-  //           placeholder: 'מקצועות',
-  //           type: FieldType.STORE_SELECT,
-  //           objectLocation: 'subjects',
-  //           required: false,
-  //           multiple: true,
-  //           select: selectSubjects,
-  //           icon: MenuBookOutlinedIcon
-  //         } as FormField
-  //       }
-  //       value={[]}
-  //       onChange={({ target }) => {
-  //         applyValue({ ...item, value: target.value });
-  //       }}
-  //     />
-  //   );
 };
 
 const ListUsers = () => {
@@ -194,7 +174,7 @@ const ListUsers = () => {
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
-  const [groups, setGroups] = React.useState<EnumValue<string>[]>([]);
+  const [groups, setGroups] = React.useState<Group[]>([]);
   const subjects = useAppSelector(selectSubjects).values;
   const grades = useAppSelector(selectGrades).values;
 
@@ -219,7 +199,7 @@ const ListUsers = () => {
       setRows(users);
     });
 
-    getGroupsForSelect().then((groups) => {
+    getAllGroups().then((groups) => {
       setGroups(groups);
     });
   }, []);
@@ -350,12 +330,13 @@ const ListUsers = () => {
         },
         type: 'singleSelect',
         valueGetter: (params) =>
-          params.row.group?.value ?? params.row.group?.id,
-        valueOptions: () => groups,
+          params.row.group?.value ?? params.row.group?.id ?? '',
+        valueOptions: () =>
+          groups.map((group) => ({ label: group.name, value: group.id })),
         valueSetter: (params) => {
           return {
             ...params.row,
-            group: groups.find((group) => group.value === params.value)
+            group: groups.find((group) => group.id === params.value)
           };
         }
       },

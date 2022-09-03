@@ -45,7 +45,7 @@ export const userConverter: FirestoreDataConverter<User> = {
     }
 
     if (user.group) {
-      userInfo.group = user.group?.id;
+      userInfo.group = user.group?.id ?? user.group?.value;
     }
 
     if (user.subjects) {
