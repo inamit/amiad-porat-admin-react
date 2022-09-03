@@ -1,6 +1,8 @@
 import { FieldType } from './enums/fieldTypes';
 import Joi from 'Joi';
 import { RadioGroupDirection } from './enums/radioGroupDirection';
+import { RootState } from 'store/store';
+import { ConfigValues } from 'store/config/config.model';
 
 type Operator = '===' | '>' | '<' | '<=' | '>=';
 
@@ -28,6 +30,10 @@ export interface SyncSelectFormField extends SelectFormField {
   children: { value: any; label: string }[];
 }
 
+export interface StoreFormField extends FormField {
+  select: (state: RootState) => ConfigValues;
+}
+
 export interface AsyncSelectFormField extends SelectFormField {
   asyncChildren: () => Promise<{ value: any; label: string }[]>;
 }
@@ -41,4 +47,5 @@ export type FormFieldType =
   | FormField
   | SyncSelectFormField
   | AsyncSelectFormField
-  | RadioFormField;
+  | RadioFormField
+  | StoreFormField;
