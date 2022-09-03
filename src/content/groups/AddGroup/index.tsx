@@ -1,3 +1,4 @@
+import { LoadingButton } from '@mui/lab';
 import {
   Dialog,
   DialogTitle,
@@ -20,7 +21,7 @@ import { AddGroupModel } from './addGroupModel';
 
 interface AddGroupProps {
   isOpen: boolean;
-  onClose: (addedGroup?: Group) => void;
+  onClose: (event: {}, reason: string, addedGroup?: Group) => void;
 }
 
 const AddGroup = (props: AddGroupProps) => {
@@ -38,6 +39,7 @@ const AddGroup = (props: AddGroupProps) => {
     [key: string]: string;
   }>({});
   const [valid, setValid] = React.useState<boolean>(false);
+  const [loading, setLoading] = React.useState<boolean>(false);
 
   useEffect(() => {
     setValid(areFieldsValid(false));
@@ -76,15 +78,15 @@ const AddGroup = (props: AddGroupProps) => {
 
   const addGroup = async () => {
     try {
-      MySwal.showLoading();
+      setLoading(true);
       const docRef = (await createNewGroup(group)).withConverter(
         groupConverter
       );
       const doc = await getDoc(docRef);
-      MySwal.hideLoading();
+      setLoading(false);
       MySwal.fire({ title: 'השיעור נוסף', icon: 'success' });
 
-      props.onClose(doc.data());
+      props.onClose(undefined, 'success', doc.data());
     } catch (error) {
       MySwal.hideLoading();
       MySwal.fire({
@@ -120,16 +122,17 @@ const AddGroup = (props: AddGroupProps) => {
             validationErrors={validationErrors}
             isFieldValid={isFieldValid}
           />
-          <Button
+          <LoadingButton
             sx={{ '&': { alignSelf: 'center' } }}
             disabled={!valid}
             onClick={() => {
               areFieldsValid(true) && addGroup();
             }}
             variant="contained"
+            loading={loading}
           >
             צור שיעור
-          </Button>
+          </LoadingButton>
         </Box>
       </DialogContent>
     </Dialog>
