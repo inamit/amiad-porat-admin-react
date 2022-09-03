@@ -63,7 +63,10 @@ export const groupConverter: FirestoreDataConverter<Group> = {
   toFirestore: (group: Group) => {
     return {
       name: group.name,
-      teacher: group.teacher?.uid
+      teacher: group.teacher?.uid,
+      subject: group.subject,
+      dayInWeek: group.day,
+      hour: group.hour
     };
   },
   fromFirestore: (snapshot, options) => {
