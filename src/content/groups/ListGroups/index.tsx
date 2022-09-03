@@ -314,7 +314,7 @@ const ListGroups = () => {
       </Card>
       <AddGroup
         isOpen={addGroupOpen}
-        onClose={(addedGroup?) => {
+        onClose={(event, reason, addedGroup?) => {
           setAddGroupOpen(false);
           if (addedGroup) {
             setRows([...rows, addedGroup]);
