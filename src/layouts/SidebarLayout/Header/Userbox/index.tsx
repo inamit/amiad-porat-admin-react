@@ -59,12 +59,10 @@ const UserBoxDescription = styled(Typography)(
 );
 
 function HeaderUserbox() {
-
-  const user =
-  {
-    name: 'Catherine Pike',
+  const user = {
+    name: 'עמיעד פורת',
     avatar: '/static/images/avatars/1.jpg',
-    jobtitle: 'Project Manager'
+    jobtitle: 'מנהל'
   };
 
   const ref = useRef<any>(null);
@@ -117,16 +115,12 @@ function HeaderUserbox() {
           </UserBoxText>
         </MenuUserBox>
         <Divider sx={{ mb: 0 }} />
-        <List sx={{ p: 1 }} component="nav">
+        {/* <List sx={{ p: 1 }} component="nav">
           <ListItem button to="/management/profile/details" component={NavLink}>
             <AccountBoxTwoToneIcon fontSize="small" />
             <ListItemText primary="My Profile" />
           </ListItem>
-          <ListItem
-            button
-            to="/dashboards/messenger"
-            component={NavLink}
-          >
+          <ListItem button to="/dashboards/messenger" component={NavLink}>
             <InboxTwoToneIcon fontSize="small" />
             <ListItemText primary="Messenger" />
           </ListItem>
@@ -139,11 +133,11 @@ function HeaderUserbox() {
             <ListItemText primary="Account Settings" />
           </ListItem>
         </List>
-        <Divider />
+        <Divider /> */}
         <Box sx={{ m: 1 }}>
           <Button color="primary" fullWidth>
             <LockOpenTwoToneIcon sx={{ mr: 1 }} />
-            Sign out
+            התנתקות
           </Button>
         </Box>
       </Popover>
