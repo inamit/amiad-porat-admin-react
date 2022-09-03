@@ -1,35 +1,39 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-import { SidebarProvider } from "./contexts/SidebarContext";
-import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter } from "react-router-dom";
-import rtlPlugin from "stylis-plugin-rtl";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
-import { prefixer } from "stylis";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { SidebarProvider } from './contexts/SidebarContext';
+import { HelmetProvider } from 'react-helmet-async';
+import { BrowserRouter } from 'react-router-dom';
+import rtlPlugin from 'stylis-plugin-rtl';
+import { CacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
+import { prefixer } from 'stylis';
+import { Provider } from 'react-redux';
+import { store } from 'store/store';
 
 const cacheRtl = createCache({
-  key: "muirtl",
-  stylisPlugins: [prefixer, rtlPlugin],
+  key: 'muirtl',
+  stylisPlugins: [prefixer, rtlPlugin]
 });
 
 const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
+  document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <CacheProvider value={cacheRtl}>
-      <HelmetProvider>
-        <SidebarProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </SidebarProvider>
-      </HelmetProvider>
-    </CacheProvider>
+    <Provider store={store}>
+      <CacheProvider value={cacheRtl}>
+        <HelmetProvider>
+          <SidebarProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </SidebarProvider>
+        </HelmetProvider>
+      </CacheProvider>
+    </Provider>
   </React.StrictMode>
 );
 
