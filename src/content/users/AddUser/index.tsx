@@ -4,18 +4,12 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Divider,
-  TextField
+  Divider
 } from '@mui/material';
 
 import React, { useEffect } from 'react';
 import { AddUserForm } from './userFormModel';
 import { addUserFields } from './addUserFields';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { FieldType } from '../../../models/enums/fieldTypes';
-import TextFieldSelect from '../../../components/TextFieldSelect';
-import TextFieldAsyncSelect from '../../../components/TextFieldAsyncSelect';
-import TextFieldIcon from '../../../components/TextFieldIcon';
 
 import { httpsCallable } from 'firebase/functions';
 import { FormField } from 'models/fieldsConfigs';

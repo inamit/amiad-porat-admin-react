@@ -1,23 +1,15 @@
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import { getGroupsForSelect } from 'dal/groups.dal';
-import { getGrades, getSubjects } from '../../../../dal/config.dal';
 import { FieldType } from '../../../../models/enums/fieldTypes';
 import { UserRoles } from '../../../../models/enums/userRoles';
-import {
-  AsyncSelectFormField,
-  FormField,
-  SyncSelectFormField
-} from '../../../../models/fieldsConfigs';
+import { FormFieldType } from '../../../../models/fieldsConfigs';
 import { isNumberRequired } from 'validations/numberValidations';
 import { isRequired } from 'validations/stringValidations';
 import { isArrayRequired } from 'validations/arrayValidations';
+import { selectGrades, selectSubjects } from 'store/config/config.slice';
 
-export const addStudentFields: (
-  | FormField
-  | SyncSelectFormField
-  | AsyncSelectFormField
-)[] = [
+export const addStudentFields: FormFieldType[] = [
   {
     showConditions: [
       {
@@ -28,9 +20,9 @@ export const addStudentFields: (
     ],
     objectLocation: 'subjects',
     placeholder: 'מקצועות',
-    type: FieldType.ASYNC_SELECT,
+    type: FieldType.STORE_SELECT,
     icon: MenuBookOutlinedIcon,
-    asyncChildren: getSubjects,
+    select: selectSubjects,
     required: true,
     multiple: true,
     validationFunction: isArrayRequired
@@ -45,9 +37,9 @@ export const addStudentFields: (
     ],
     objectLocation: 'grade',
     placeholder: 'כיתה',
-    type: FieldType.ASYNC_SELECT,
+    type: FieldType.STORE_SELECT,
     icon: SchoolOutlinedIcon,
-    asyncChildren: getGrades,
+    select: selectGrades,
     required: true,
     multiple: false,
     validationFunction: isNumberRequired

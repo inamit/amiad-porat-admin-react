@@ -5,12 +5,13 @@ import { isRequired } from 'validations/stringValidations';
 import { FieldType } from 'models/enums/fieldTypes';
 import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
-import { Subjects } from 'models/enums/subjects';
 import { RadioGroupDirection } from 'models/enums/radioGroupDirection';
 import { isNumberRequired } from 'validations/numberValidations';
 import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { isDateRequired } from 'validations/dateValidations';
+import { useAppSelector } from 'store/store';
+import { selectSubjects } from 'store/config/config.slice';
 
 export const addGroupFields: FormFieldType[] = [
   {
@@ -39,8 +40,8 @@ export const addGroupFields: FormFieldType[] = [
   {
     objectLocation: 'subject',
     placeholder: '',
-    type: FieldType.RADIO_GROUP,
-    children: Object.values(Subjects),
+    type: FieldType.STORE_RADIO_GROUP,
+    select: selectSubjects,
     required: true,
     direction: RadioGroupDirection.ROW,
     validationFunction: isRequired

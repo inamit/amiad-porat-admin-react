@@ -5,13 +5,8 @@ import PasswordOutlinedIcon from '@mui/icons-material/PasswordOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import { UserRoles } from 'models/enums/userRoles';
 import { addStudentFields } from './fields/addStudentFields';
-import {
-  AsyncSelectFormField,
-  FormField,
-  SyncSelectFormField
-} from '../../../models/fieldsConfigs';
+import { FormFieldType } from '../../../models/fieldsConfigs';
 import { FieldType } from 'models/enums/fieldTypes';
-import Joi from 'joi';
 import {
   isEmail,
   isPassword,
@@ -21,11 +16,7 @@ import {
 import { isDateRequired } from 'validations/dateValidations';
 import { isNumberRequired } from 'validations/numberValidations';
 
-export const addUserFields: (
-  | FormField
-  | SyncSelectFormField
-  | AsyncSelectFormField
-)[] = [
+export const addUserFields: FormFieldType[] = [
   {
     objectLocation: 'firstName',
     icon: PersonOutline,
