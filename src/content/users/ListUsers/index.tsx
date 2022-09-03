@@ -5,40 +5,43 @@ import {
   GridActionsCellItem,
   GridRowParams,
   GridRowId,
-  GridRenderEditCellParams,
-  useGridApiContext,
-  GridRenderCellParams,
-  GridValueSetterParams,
-  GridRowModel
+  GridRowModel,
+  GridFilterOperator,
+  GridFilterItem,
+  GridRowModes,
+  GridRowModesModel,
+  MuiEvent,
+  GridEventListener
 } from '@mui/x-data-grid';
-import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
 import React, { useEffect } from 'react';
-import { getAllUsers, getUsersWithRoleBiggerThan } from 'dal/users.dal';
+import { getAllUsers, updateUser } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
-import {
-  getAllGroups,
-  teacherHasGroupByDateTime,
-  updateGroup
-} from 'dal/groups.dal';
-import Group from 'models/group';
-import { DaysOfWeek } from 'models/enums/daysOfWeek';
-import { TimePicker } from '@mui/x-date-pickers';
 import { styled } from '@mui/material/styles';
-import TextField from '@mui/material/TextField';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
 import { useAppSelector } from 'store/store';
 import { selectGrades, selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
-import { getHourStringFromDate } from 'utils/dateUtils';
 import Alert, { AlertProps } from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import { Chip, Tooltip } from '@mui/material';
+import {
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tooltip
+} from '@mui/material';
+import { getGroupsForSelect } from 'dal/groups.dal';
+import { EnumValue } from 'models/enums/enum';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -111,28 +114,87 @@ const NoDataText = () => {
   );
 };
 
-const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
-  const { id, value, field } = props;
-  const apiRef = useGridApiContext();
+const SubjectsMultiSelectComponent = (props) => {
+  const { item, applyValue } = props;
+  const subjects = useAppSelector(selectSubjects).values;
+
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const MenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250
+      }
+    }
+  };
 
   return (
-    <TimePicker
-      value={value}
-      onChange={(newValue) => {
-        apiRef.current.setEditCellValue({
-          id,
-          field,
-          value: newValue
-        });
-      }}
-      renderInput={(fieldParams) => <TextField {...fieldParams} />}
-    />
+    <div>
+      <FormControl variant="standard" sx={{ width: 180 }}>
+        <InputLabel shrink={true} id="subjects-select-label">
+          מקצוע
+        </InputLabel>
+        <Select
+          variant="standard"
+          labelId="subjects-select-label"
+          id="subjects-select"
+          multiple
+          value={item.value ?? []}
+          onChange={({ target }) => {
+            applyValue({ ...item, value: target.value });
+          }}
+          renderValue={(selected) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map((value) => (
+                <Chip
+                  sx={{ height: '90%' }}
+                  key={value}
+                  label={getEnumByValue(subjects, value).label}
+                />
+              ))}
+            </Box>
+          )}
+          MenuProps={MenuProps}
+        >
+          {subjects.map((subject) => (
+            <MenuItem key={subject.value} value={subject.value}>
+              {subject.label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </div>
   );
+  //   return (
+  //     <StoreField
+  //       childClass={TextFieldSelect}
+  //       field={
+  //         {
+  //           placeholder: 'מקצועות',
+  //           type: FieldType.STORE_SELECT,
+  //           objectLocation: 'subjects',
+  //           required: false,
+  //           multiple: true,
+  //           select: selectSubjects,
+  //           icon: MenuBookOutlinedIcon
+  //         } as FormField
+  //       }
+  //       value={[]}
+  //       onChange={({ target }) => {
+  //         applyValue({ ...item, value: target.value });
+  //       }}
+  //     />
+  //   );
 };
 
 const ListUsers = () => {
   const [rows, setRows] = React.useState<GridRowsProp<User>>([]);
   type Row = typeof rows[number];
+  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
+    {}
+  );
+  const [groups, setGroups] = React.useState<EnumValue<string>[]>([]);
   const subjects = useAppSelector(selectSubjects).values;
   const grades = useAppSelector(selectGrades).values;
 
@@ -143,9 +205,9 @@ const ListUsers = () => {
   const handleCloseSnackbar = () => setSnackbar(null);
 
   const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    // const group = await updateGroup(newRow);
+    const user = await updateUser(newRow);
     setSnackbar({ children: 'המשתמש התעדכן בהצלחה', severity: 'success' });
-    return newRow;
+    return user;
   }, []);
 
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
@@ -156,7 +218,41 @@ const ListUsers = () => {
     getAllUsers().then((users) => {
       setRows(users);
     });
+
+    getGroupsForSelect().then((groups) => {
+      setGroups(groups);
+    });
   }, []);
+
+  const handleRowEditStart = (
+    params: GridRowParams,
+    event: MuiEvent<React.SyntheticEvent>
+  ) => {
+    event.defaultMuiPrevented = true;
+  };
+
+  const handleRowEditStop: GridEventListener<'rowEditStop'> = (
+    params,
+    event
+  ) => {
+    event.defaultMuiPrevented = true;
+  };
+
+  const handleEditClick = (id: GridRowId) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id: GridRowId) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleCancelClick = (id: GridRowId) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true }
+    });
+  };
+
   const deleteUser = React.useCallback(
     (id: GridRowId) => () => {
       // TODO: implement delete user
@@ -164,6 +260,27 @@ const ListUsers = () => {
     },
     []
   );
+
+  const subjectsFilter: GridFilterOperator[] = [
+    {
+      label: 'מכיל',
+      value: 'contains',
+      getApplyFilterFn: (filterItem: GridFilterItem) => {
+        if (
+          !filterItem.columnField ||
+          !filterItem.value ||
+          !filterItem.operatorValue
+        ) {
+          return null;
+        }
+
+        return (params): boolean => {
+          return filterItem.value.every((item) => params.value?.includes(item));
+        };
+      },
+      InputComponent: SubjectsMultiSelectComponent
+    }
+  ];
 
   const columns = React.useMemo<GridColumns<Row>>(
     () => [
@@ -194,7 +311,7 @@ const ListUsers = () => {
       {
         field: 'birthDate',
         headerName: 'תאריך לידה',
-        editable: true,
+        editable: false,
         width: 100,
         type: 'date',
         valueFormatter: (params) => {
@@ -220,7 +337,7 @@ const ListUsers = () => {
       {
         field: 'group',
         headerName: 'שיעור',
-        editable: false,
+        editable: true,
         width: 150,
         renderCell: (params) => {
           return (
@@ -230,12 +347,22 @@ const ListUsers = () => {
               <div>{params.row.group?.name}</div>
             </Tooltip>
           );
+        },
+        type: 'singleSelect',
+        valueGetter: (params) =>
+          params.row.group?.value ?? params.row.group?.id,
+        valueOptions: () => groups,
+        valueSetter: (params) => {
+          return {
+            ...params.row,
+            group: groups.find((group) => group.value === params.value)
+          };
         }
       },
       {
         field: 'subjects',
         headerName: 'מקצועות',
-        editable: true,
+        editable: false,
         width: 200,
         renderCell: (params) => {
           return params.row.subjects?.map((subject) => {
@@ -244,7 +371,10 @@ const ListUsers = () => {
               return <Chip key={enumValue.label} label={enumValue.label} />;
             }
           });
-        }
+        },
+        type: 'singleSelect',
+        valueOptions: () => subjects,
+        filterOperators: subjectsFilter
       },
       {
         field: 'role',
@@ -264,16 +394,53 @@ const ListUsers = () => {
         field: 'actions',
         headerName: 'פעולות',
         type: 'actions',
-        getActions: (params: GridRowParams) => [
-          <GridActionsCellItem
-            icon={<DeleteIcon sx={{ '&': { color: 'red' } }} />}
-            label="מחיקה"
-            onClick={deleteUser(params.id)}
-          />
-        ]
+        getActions: ({ id }) => {
+          const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+          if (isInEditMode) {
+            return [
+              <GridActionsCellItem
+                icon={<SaveIcon />}
+                label="Save"
+                onClick={handleSaveClick(id)}
+              />,
+              <GridActionsCellItem
+                icon={<CancelIcon />}
+                label="Cancel"
+                className="textPrimary"
+                onClick={handleCancelClick(id)}
+                color="inherit"
+              />
+            ];
+          }
+
+          return [
+            <GridActionsCellItem
+              icon={<EditIcon />}
+              label="Edit"
+              className="textPrimary"
+              onClick={handleEditClick(id)}
+              color="inherit"
+            />,
+            <GridActionsCellItem
+              icon={<DeleteIcon />}
+              label="Delete"
+              onClick={deleteUser(id)}
+              color="inherit"
+            />
+          ];
+        }
       }
     ],
-    [deleteUser, subjects, grades]
+    [
+      deleteUser,
+      handleEditClick,
+      handleSaveClick,
+      handleCancelClick,
+      subjects,
+      grades,
+      groups
+    ]
   );
 
   return (
@@ -289,14 +456,26 @@ const ListUsers = () => {
         <Divider />
         <CardContent>
           <DataGrid
+            sx={{
+              '.MuiDataGrid-row--editing .MuiDataGrid-cell': {
+                backgroundColor: 'transparent !important'
+              },
+              '.MuiDataGrid-row--editing': {
+                backgroundColor: 'lightskyblue !important'
+              }
+            }}
             autoHeight={true}
             rows={rows}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.uid}
+            editMode="row"
             experimentalFeatures={{ newEditingApi: true }}
             processRowUpdate={processRowUpdate}
             onProcessRowUpdateError={handleProcessRowUpdateError}
+            rowModesModel={rowModesModel}
+            onRowEditStart={handleRowEditStart}
+            onRowEditStop={handleRowEditStop}
           />
         </CardContent>
       </Card>

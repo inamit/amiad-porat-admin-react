@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   query,
+  setDoc,
   where,
   WhereFilterOp
 } from 'firebase/firestore';
@@ -49,6 +50,15 @@ export const getUsersWithRoleAndExclude = async (
 export const getAllUsers = async (): Promise<User[]> => {
   const getUsers = httpsCallable(getFunctions(), 'getAllUsers');
   return (await getUsers()).data as User[];
+};
+
+export const updateUser = async (updatedUser: User) => {
+  const userRef = doc(db, usersCollectionName, updatedUser.uid).withConverter(
+    userConverter
+  );
+
+  await setDoc(userRef, updatedUser);
+  return updatedUser;
 };
 
 const queryRole = async (operator: WhereFilterOp, role: EnumValue<number>) => {

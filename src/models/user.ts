@@ -32,7 +32,27 @@ export default class User {
 
 export const userConverter: FirestoreDataConverter<User> = {
   toFirestore: (user: User) => {
-    return { firstName: user.firstName, lastName: user.lastName };
+    const userInfo: any = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNo: user.phoneNo,
+      role: user.role,
+      birthDate: user.birthDate
+    };
+
+    if (user.grade) {
+      userInfo.grade = user.grade;
+    }
+
+    if (user.group) {
+      userInfo.group = user.group?.id;
+    }
+
+    if (user.subjects) {
+      userInfo.subjects = user.subjects;
+    }
+
+    return userInfo;
   },
   fromFirestore: (snapshot, options) => {
     const data = snapshot.data(options);
