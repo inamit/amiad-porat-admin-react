@@ -51,7 +51,7 @@ const menuItems: MenuItems[] = [
     items: [
       {
         name: 'כל המשתמשים',
-        link: '/dashboards/crypto',
+        link: '/users',
         icon: FilterListIcon
       },
       {

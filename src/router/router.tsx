@@ -1,4 +1,5 @@
 import ListGroups from 'content/groups/ListGroups';
+import ListUsers from 'content/users/ListUsers';
 import { lazy, Suspense } from 'react';
 import { Navigate, RouteObject } from 'react-router';
 import SuspenseLoader from '../components/SuspenseLoader';
@@ -41,7 +42,7 @@ const routes: RouteObject[] = [
     children: [
       {
         path: '',
-        element: <Navigate to="/users/add" replace />
+        element: <ListUsers />
       },
       {
         path: 'add',
