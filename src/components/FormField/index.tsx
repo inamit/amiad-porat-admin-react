@@ -1,18 +1,12 @@
-import {
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  TextField
-} from '@mui/material';
+import { TextField } from '@mui/material';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
-import TextFieldAsyncSelect from 'components/TextFieldAsyncSelect';
+import AsyncField from 'components/AsyncField';
+import StoreField from 'components/StoreField';
 import TextFieldIcon from 'components/TextFieldIcon';
+import TextFieldRadioGroup from 'components/TextFieldRadioGroup';
 import TextFieldSelect from 'components/TextFieldSelect';
 import { FieldType } from 'models/enums/fieldTypes';
-import { RadioGroupDirection } from 'models/enums/radioGroupDirection';
-import { FormFieldType, RadioFormField } from 'models/fieldsConfigs';
+import { FormFieldType } from 'models/fieldsConfigs';
 import { ReactElement } from 'react';
 
 interface FormFieldProps<T> {
@@ -113,8 +107,30 @@ const FormField = <T,>({
       break;
     case FieldType.ASYNC_SELECT:
       fieldToShow = (
-        <TextFieldAsyncSelect
+        <AsyncField
           key={field.objectLocation}
+          childClass={TextFieldSelect}
+          field={field}
+          value={formValues[field.objectLocation]}
+          error={Boolean(validationErrors[field.objectLocation])}
+          helperText={validationErrors[field.objectLocation]}
+          onBlur={() => {
+            isFieldValid(field);
+          }}
+          onChange={({ target }) => {
+            const newValues = { ...formValues };
+            newValues[field.objectLocation] = target.value;
+
+            setValues(newValues);
+          }}
+        />
+      );
+      break;
+    case FieldType.STORE_SELECT:
+      fieldToShow = (
+        <StoreField
+          key={field.objectLocation}
+          childClass={TextFieldSelect}
           field={field}
           value={formValues[field.objectLocation]}
           error={Boolean(validationErrors[field.objectLocation])}
@@ -133,46 +149,37 @@ const FormField = <T,>({
       break;
     case FieldType.RADIO_GROUP:
       fieldToShow = (
-        <FormControl
-          sx={{
-            '&': {
-              paddingBottom: '30px',
-              alignSelf: 'center',
-              display: 'flex',
-              alignItems: 'center'
-            }
-          }}
-        >
-          <FormLabel id={field.objectLocation + '-group-label'}>
-            {field.placeholder}
-          </FormLabel>
-          <RadioGroup
-            row={
-              (field as RadioFormField).direction === RadioGroupDirection.ROW
-            }
-            aria-labelledby={field.objectLocation + '-group-label'}
-            name={field.objectLocation + '-radio-buttons-group'}
-            value={formValues[field.objectLocation]}
-            onChange={({ target }) => {
-              const newValues = { ...formValues };
-              newValues[field.objectLocation] = target.value;
-
-              setValues(newValues);
-            }}
-            onBlur={() => {
-              isFieldValid(field);
-            }}
-          >
-            {(field as RadioFormField).children.map((child) => (
-              <FormControlLabel
-                key={child.value}
-                value={child.value}
-                control={<Radio />}
-                label={child.label}
-              />
-            ))}
-          </RadioGroup>
-        </FormControl>
+        <TextFieldRadioGroup
+          key={field.objectLocation}
+          field={field}
+          formValues={formValues}
+          setValues={setValues}
+          isFieldValid={isFieldValid}
+        />
+      );
+      break;
+    case FieldType.ASYNC_RADIO_GROUP:
+      fieldToShow = (
+        <AsyncField
+          childClass={TextFieldRadioGroup}
+          key={field.objectLocation}
+          field={field}
+          formValues={formValues}
+          setValues={setValues}
+          isFieldValid={isFieldValid}
+        />
+      );
+      break;
+    case FieldType.STORE_RADIO_GROUP:
+      fieldToShow = (
+        <StoreField
+          childClass={TextFieldRadioGroup}
+          key={field.objectLocation}
+          field={field}
+          formValues={formValues}
+          setValues={setValues}
+          isFieldValid={isFieldValid}
+        />
       );
       break;
     default:
