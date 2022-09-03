@@ -9,6 +9,8 @@ export default class User {
   public phoneNo: string;
   public role: EnumValue<number>;
 
+  [extraField: string]: any;
+
   static empty() {
     return new User('', '', '', '', UserRoles.STUDENT.value);
   }
