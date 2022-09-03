@@ -65,8 +65,6 @@ const DialogTitleWrapper = styled(DialogTitle)(
 );
 
 function HeaderSearch() {
-
-
   const [openSearchResults, setOpenSearchResults] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
@@ -94,7 +92,7 @@ function HeaderSearch() {
 
   return (
     <>
-      <Tooltip arrow title="Search">
+      <Tooltip arrow title="חיפוש">
         <IconButton color="primary" onClick={handleClickOpen}>
           <SearchTwoToneIcon />
         </IconButton>
@@ -121,9 +119,9 @@ function HeaderSearch() {
                 </InputAdornment>
               )
             }}
-            placeholder="Search terms here..."
+            placeholder="אפשר להתחיל לחפש פה..."
             fullWidth
-            label="Search"
+            label="חיפוש"
           />
         </DialogTitleWrapper>
         <Divider />
@@ -136,7 +134,7 @@ function HeaderSearch() {
               justifyContent="space-between"
             >
               <Typography variant="body2" component="span">
-                Search results for{' '}
+                תוצאות חיפוש עבור{' '}
                 <Typography
                   sx={{ fontWeight: 'bold' }}
                   variant="body1"
@@ -146,7 +144,7 @@ function HeaderSearch() {
                 </Typography>
               </Typography>
               <Link href="#" variant="body2" underline="hover">
-                Advanced search
+                חיפוש מתקדם
               </Link>
             </Box>
             <Divider sx={{ my: 1 }} />
@@ -166,7 +164,12 @@ function HeaderSearch() {
                 </Hidden>
                 <Box flex="1">
                   <Box display="flex" justifyContent="space-between">
-                    <Link href="#" underline="hover" sx={{ fontWeight: 'bold' }} variant="body2">
+                    <Link
+                      href="#"
+                      underline="hover"
+                      sx={{ fontWeight: 'bold' }}
+                      variant="body2"
+                    >
                       Dashboard for Healthcare Platform
                     </Link>
                   </Box>
@@ -178,7 +181,8 @@ function HeaderSearch() {
                         lighten(theme.palette.secondary.main, 0.5)
                     }}
                   >
-                    This page contains all the necessary information for managing all hospital staff.
+                    This page contains all the necessary information for
+                    managing all hospital staff.
                   </Typography>
                 </Box>
                 <ChevronRightTwoToneIcon />
@@ -199,7 +203,12 @@ function HeaderSearch() {
                 </Hidden>
                 <Box flex="1">
                   <Box display="flex" justifyContent="space-between">
-                    <Link href="#" underline="hover" sx={{ fontWeight: 'bold' }} variant="body2">
+                    <Link
+                      href="#"
+                      underline="hover"
+                      sx={{ fontWeight: 'bold' }}
+                      variant="body2"
+                    >
                       Example Projects Application
                     </Link>
                   </Box>
@@ -232,7 +241,12 @@ function HeaderSearch() {
                 </Hidden>
                 <Box flex="1">
                   <Box display="flex" justifyContent="space-between">
-                    <Link href="#" underline="hover" sx={{ fontWeight: 'bold' }} variant="body2">
+                    <Link
+                      href="#"
+                      underline="hover"
+                      sx={{ fontWeight: 'bold' }}
+                      variant="body2"
+                    >
                       Search Results Page
                     </Link>
                   </Box>
@@ -244,7 +258,8 @@ function HeaderSearch() {
                         lighten(theme.palette.secondary.main, 0.5)
                     }}
                   >
-                    Choose if you would like to show or not this typography section here...
+                    Choose if you would like to show or not this typography
+                    section here...
                   </Typography>
                 </Box>
                 <ChevronRightTwoToneIcon />
@@ -252,7 +267,7 @@ function HeaderSearch() {
             </List>
             <Divider sx={{ mt: 1, mb: 2 }} />
             <Box sx={{ textAlign: 'center' }}>
-              <Button color="primary">View all search results</Button>
+              <Button color="primary">צפייה בכל התוצאות</Button>
             </Box>
           </DialogContent>
         )}
