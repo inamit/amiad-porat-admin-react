@@ -10,7 +10,6 @@ import {
 import GenericFormFields from 'components/GenericFormFields';
 import { createNewGroup } from 'dal/groups.dal';
 import { getDoc } from 'firebase/firestore';
-import { Subjects } from 'models/enums/subjects';
 import { FormFieldType } from 'models/fieldsConfigs';
 import Group, { groupConverter } from 'models/group';
 import React, { useEffect } from 'react';
@@ -30,7 +29,7 @@ const AddGroup = (props: AddGroupProps) => {
   const initialGroup: AddGroupModel = {
     name: '',
     teacher: '',
-    subject: Subjects.MATH.value,
+    subject: '',
     dayInWeek: undefined,
     hour: undefined
   };

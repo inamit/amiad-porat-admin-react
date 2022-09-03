@@ -6,7 +6,7 @@ export enum LoadStatus {
   FAILED
 }
 
-export type ConfigValues = { values: EnumValue<number>[]; status: LoadStatus };
+export type ConfigValues = { values: EnumValue<any>[]; status: LoadStatus };
 export interface ConfigModel {
   grades: ConfigValues;
   subjects: ConfigValues;

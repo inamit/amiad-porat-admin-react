@@ -23,7 +23,6 @@ import {
   updateGroupField
 } from 'dal/groups.dal';
 import Group from 'models/group';
-import { getSubjectByValue, Subjects } from 'models/enums/subjects';
 import { DaysOfWeek, getDayOfWeekByValue } from 'models/enums/daysOfWeek';
 import { TimePicker } from '@mui/x-date-pickers';
 import Tooltip, { tooltipClasses, TooltipProps } from '@mui/material/Tooltip';
@@ -35,6 +34,9 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
+import { useAppSelector } from 'store/store';
+import { selectSubjects } from 'store/config/config.slice';
+import { getEnumByValue } from 'models/enums/enumUtils';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -150,6 +152,7 @@ const ListGroups = () => {
   type Row = typeof rows[number];
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
+  const subjects = useAppSelector(selectSubjects).values;
 
   useEffect(() => {
     getUsersWithRoleBiggerThan(UserRoles.TEACHER).then((users) => {
@@ -224,11 +227,12 @@ const ListGroups = () => {
         field: 'subject',
         headerName: 'מקצוע',
         width: 150,
-        renderCell: (params) => getSubjectByValue(params.row.subject).label,
+        renderCell: (params) =>
+          getEnumByValue(subjects, params.row.subject)?.label,
         valueGetter: (params) => params.row.subject,
         type: 'singleSelect',
         editable: true,
-        valueOptions: () => Object.values(Subjects)
+        valueOptions: () => subjects
       },
       {
         field: 'dayInWeek',
@@ -275,7 +279,7 @@ const ListGroups = () => {
         ]
       }
     ],
-    [deleteGroup]
+    [deleteGroup, subjects, teachers]
   );
 
   return (
