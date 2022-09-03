@@ -37,6 +37,7 @@ import Box from '@mui/material/Box';
 import { useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
+import { getHourStringFromDate } from 'utils/dateUtils';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -170,12 +171,6 @@ const ListGroups = () => {
     []
   );
 
-  const getHourStringFromDate = (date: Date): string => {
-    return `${date.getHours()}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
-  };
   const columns = React.useMemo<GridColumns<Row>>(
     () => [
       {
