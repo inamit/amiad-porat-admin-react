@@ -1,3 +1,4 @@
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   collection,
   doc,
@@ -43,6 +44,11 @@ export const getUsersWithRoleAndExclude = async (
   const snapshot = await getDocs(userQuery.withConverter(userConverter));
 
   return snapshot.docs.map((doc) => doc.data());
+};
+
+export const getAllUsers = async (): Promise<User[]> => {
+  const getUsers = httpsCallable(getFunctions(), 'getAllUsers');
+  return (await getUsers()).data as User[];
 };
 
 const queryRole = async (operator: WhereFilterOp, role: EnumValue<number>) => {
