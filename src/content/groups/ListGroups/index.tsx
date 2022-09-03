@@ -9,7 +9,7 @@ import {
   useGridApiContext,
   GridRenderCellParams,
   GridValueSetterParams,
-  GridEditSingleSelectCell
+  GridRowModel
 } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
 import React, { useEffect } from 'react';
@@ -20,12 +20,11 @@ import AddGroup from '../AddGroup';
 import {
   getAllGroups,
   teacherHasGroupByDateTime,
-  updateGroupField
+  updateGroup
 } from 'dal/groups.dal';
 import Group from 'models/group';
-import { DaysOfWeek, getDayOfWeekByValue } from 'models/enums/daysOfWeek';
+import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import { TimePicker } from '@mui/x-date-pickers';
-import Tooltip, { tooltipClasses, TooltipProps } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Card from '@mui/material/Card';
@@ -38,6 +37,8 @@ import { useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
 import { getHourStringFromDate } from 'utils/dateUtils';
+import Alert, { AlertProps } from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -110,15 +111,6 @@ const NoDataText = () => {
   );
 };
 
-const StyledTooltip = styled(({ className, ...props }: TooltipProps) => (
-  <Tooltip {...props} classes={{ popper: className }} />
-))(({ theme }) => ({
-  [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: theme.palette.error.main,
-    color: theme.palette.error.contrastText
-  }
-}));
-
 const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
   const { id, value, field } = props;
   const apiRef = useGridApiContext();
@@ -138,22 +130,28 @@ const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
   );
 };
 
-const SelectEditComponent = (props: GridRenderEditCellParams) => {
-  const { error } = props;
-
-  return (
-    <Tooltip open={!!error} title={error}>
-      <GridEditSingleSelectCell {...props} />
-    </Tooltip>
-  );
-};
-
 const ListGroups = () => {
   const [rows, setRows] = React.useState<GridRowsProp<Group>>([]);
   type Row = typeof rows[number];
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
   const subjects = useAppSelector(selectSubjects).values;
+
+  const [snackbar, setSnackbar] = React.useState<Pick<
+    AlertProps,
+    'children' | 'severity'
+  > | null>(null);
+  const handleCloseSnackbar = () => setSnackbar(null);
+
+  const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
+    const group = await updateGroup(newRow);
+    setSnackbar({ children: 'השיעור התעדכן בהצלחה', severity: 'success' });
+    return group;
+  }, []);
+
+  const handleProcessRowUpdateError = React.useCallback((error: Error) => {
+    setSnackbar({ children: error.message, severity: 'error' });
+  }, []);
 
   useEffect(() => {
     getUsersWithRoleBiggerThan(UserRoles.TEACHER).then((users) => {
@@ -166,6 +164,7 @@ const ListGroups = () => {
   }, []);
   const deleteGroup = React.useCallback(
     (id: GridRowId) => () => {
+      // TODO: implement delete group
       alert(`DELETE ${id}`);
     },
     []
@@ -177,12 +176,7 @@ const ListGroups = () => {
         field: 'name',
         headerName: 'שם השיעור',
         editable: true,
-        width: 300,
-        valueSetter: (params) => {
-          updateGroupField(params.row.id, 'name', params.value);
-
-          return { ...params.row, name: params.value };
-        }
+        width: 300
       },
       {
         field: 'teacher',
@@ -195,7 +189,6 @@ const ListGroups = () => {
           }`,
         valueGetter: (params) => params.row.teacher?.uid,
         editable: true,
-        renderEditCell: SelectEditComponent,
         valueOptions: () => {
           return teachers.map((teacher) => ({
             value: teacher.uid,
@@ -203,18 +196,30 @@ const ListGroups = () => {
           }));
         },
         preProcessEditCellProps: async (params) => {
-          console.log(params);
           const isTeacherBusy = await teacherHasGroupByDateTime(
             params.props.value,
             params.row.day,
-            params.row.hour
+            params.row.hour,
+            [params.id.toString()]
           );
           const teacherBusyErrorMessage =
             'ביום והשעה של השיעור הזה, יש למורה שיעור אחר';
 
+          if (isTeacherBusy) {
+            setSnackbar({
+              children: teacherBusyErrorMessage,
+              severity: 'error'
+            });
+          }
           return {
             ...params.props,
-            error: isTeacherBusy ? teacherBusyErrorMessage : null
+            error: isTeacherBusy
+          };
+        },
+        valueSetter: (params) => {
+          return {
+            ...params.row,
+            teacher: teachers.find((teacher) => teacher.uid === params.value)
           };
         }
       },
@@ -230,10 +235,11 @@ const ListGroups = () => {
         valueOptions: () => subjects
       },
       {
-        field: 'dayInWeek',
+        field: 'day',
         headerName: 'יום',
         width: 150,
-        renderCell: (params) => getDayOfWeekByValue(params.row.day).label,
+        renderCell: (params) =>
+          getEnumByValue(Object.values(DaysOfWeek), params.row.day)?.label,
         valueGetter: (params) => params.row.day,
         type: 'singleSelect',
         editable: true,
@@ -304,6 +310,8 @@ const ListGroups = () => {
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.id}
             experimentalFeatures={{ newEditingApi: true }}
+            processRowUpdate={processRowUpdate}
+            onProcessRowUpdateError={handleProcessRowUpdateError}
           />
         </CardContent>
       </Card>
@@ -316,6 +324,16 @@ const ListGroups = () => {
           }
         }}
       />
+      {!!snackbar && (
+        <Snackbar
+          open
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          onClose={handleCloseSnackbar}
+          autoHideDuration={3000}
+        >
+          <Alert {...snackbar} onClose={handleCloseSnackbar} />
+        </Snackbar>
+      )}
     </div>
   );
 };

@@ -7,9 +7,10 @@ import {
   DocumentReference,
   DocumentData,
   doc,
-  updateDoc,
   query,
-  where
+  where,
+  documentId,
+  setDoc
 } from 'firebase/firestore';
 import { db } from 'firebaseConfig';
 import { EnumValue } from 'models/enums/enum';
@@ -37,27 +38,35 @@ export const getGroupsForSelect = async (): Promise<EnumValue<string>[]> => {
 export const teacherHasGroupByDateTime = async (
   teacherId: string,
   dayInWeek: number,
-  hour: string
+  hour: string,
+  excludedGroups?: string[]
 ): Promise<boolean> => {
-  const groupQuery = query(
-    collection(db, groupsCollectionName),
+  const queryConstraints = [
     where('teacher', '==', teacherId),
     where('dayInWeek', '==', dayInWeek),
     where('hour', '==', hour)
+  ];
+
+  if (excludedGroups) {
+    queryConstraints.push(where(documentId(), 'not-in', excludedGroups));
+  }
+
+  const groupQuery = query(
+    collection(db, groupsCollectionName),
+    ...queryConstraints
   );
 
   const docs = await getDocs(groupQuery);
   return !docs.empty;
 };
 
-export const updateGroupField = async (
-  groupId: string,
-  fieldName: string,
-  newValue: any
-): Promise<void> => {
-  const groupRef = doc(db, groupsCollectionName, groupId);
+export const updateGroup = async (updatedGroup: Group) => {
+  const groupRef = doc(db, groupsCollectionName, updatedGroup.id).withConverter(
+    groupConverter
+  );
 
-  await updateDoc(groupRef, { [fieldName]: newValue });
+  await setDoc(groupRef, updatedGroup);
+  return updatedGroup;
 };
 
 export const createNewGroup = async (
