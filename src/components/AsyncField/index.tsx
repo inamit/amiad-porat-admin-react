@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import { AsyncSelectFormField, FormField } from 'models/fieldsConfigs';
-import TextFieldSelect, { TextFieldSelectProps } from '../TextFieldSelect';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
-const TextFieldAsyncSelect = (props: TextFieldSelectProps) => {
+const AsyncField = (props) => {
   const [children, setChildren] = React.useState([]);
 
   const MySwal = withReactContent(Swal);
@@ -28,17 +27,8 @@ const TextFieldAsyncSelect = (props: TextFieldSelectProps) => {
     }
   };
 
-  return (
-    <TextFieldSelect
-      field={{ ...props.field, children } as FormField}
-      value={props.value}
-      onChange={props.onChange}
-      onFocus={props.onFocus}
-      onBlur={props.onBlur}
-      error={props.error}
-      helperText={props.helperText}
-    />
-  );
+  const Field = props.childClass;
+  return <Field {...props} field={{ ...props.field, children } as FormField} />;
 };
 
-export default TextFieldAsyncSelect;
+export default AsyncField;
