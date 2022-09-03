@@ -76,6 +76,12 @@ function HeaderUserbox() {
     setOpen(false);
   };
 
+  const signOut = () => {
+    // TODO: Implement sign out
+    setOpen(false);
+    alert('This will sign out');
+  };
+
   return (
     <>
       <UserBoxButton color="secondary" ref={ref} onClick={handleOpen}>
@@ -135,7 +141,7 @@ function HeaderUserbox() {
         </List>
         <Divider /> */}
         <Box sx={{ m: 1 }}>
-          <Button color="primary" fullWidth>
+          <Button color="primary" onClick={signOut} fullWidth>
             <LockOpenTwoToneIcon sx={{ mr: 1 }} />
             התנתקות
           </Button>
