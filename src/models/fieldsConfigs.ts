@@ -1,5 +1,5 @@
 import { FieldType } from './enums/fieldTypes';
-import Joi from 'Joi';
+import Joi from 'joi';
 import { RadioGroupDirection } from './enums/radioGroupDirection';
 import { RootState } from 'store/store';
 import { ConfigValues } from 'store/config/config.model';
