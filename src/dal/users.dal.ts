@@ -23,6 +23,16 @@ export const getUserByID = async (id: string): Promise<User | undefined> => {
   return snapshot.data();
 };
 
+export const getUsersByMultipleIDs = async (ids: string[]): Promise<User[]> => {
+  const userQuery = query(
+    collection(db, usersCollectionName),
+    where(documentId(), 'in', ids)
+  );
+  const snapshot = await getDocs(userQuery.withConverter(userConverter));
+
+  return snapshot.docs.map((doc) => doc.data());
+};
+
 export const getUsersWithRoleBiggerThan = async (
   minRole: EnumValue<number>
 ): Promise<User[]> => {
