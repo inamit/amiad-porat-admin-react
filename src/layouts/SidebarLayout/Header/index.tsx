@@ -39,9 +39,6 @@ function Header() {
         <Hidden lgUp>
           <Logo />
         </Hidden>
-        <Hidden mdDown>
-          <HeaderMenu />
-        </Hidden>
       </Box>
       <Box display="flex" alignItems="center">
         <HeaderButtons />
