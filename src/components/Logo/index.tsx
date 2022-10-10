@@ -107,8 +107,8 @@ function Logo() {
 
       <Hidden smDown>
         <LogoTextWrapper>
-          <Tooltip title="גרסה 1.1.0" arrow placement="left">
-            <VersionBadge>1.1</VersionBadge>
+          <Tooltip title="גרסה 1.0.0" arrow placement="left">
+            <VersionBadge>1.0</VersionBadge>
           </Tooltip>
           <LogoText>עמיעד פורת</LogoText>
         </LogoTextWrapper>

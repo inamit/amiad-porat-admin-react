@@ -1,4 +1,5 @@
 import ListGroups from 'content/groups/ListGroups';
+import ListLessons from 'content/lessons/ListLessons';
 import ListUsers from 'content/users/ListUsers';
 import { lazy, Suspense } from 'react';
 import { Navigate, RouteObject } from 'react-router';
@@ -61,6 +62,20 @@ const routes: RouteObject[] = [
       {
         path: '',
         element: <ListGroups />
+      }
+    ]
+  },
+  {
+    path: '/lessons',
+    element: (
+      <RequireAuth>
+        <SidebarLayout />
+      </RequireAuth>
+    ),
+    children: [
+      {
+        path: '',
+        element: <ListLessons />
       }
     ]
   }
