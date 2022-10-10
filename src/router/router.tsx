@@ -1,3 +1,4 @@
+import Dashboard from 'content/dashboard';
 import ListGroups from 'content/groups/ListGroups';
 import ListLessons from 'content/lessons/ListLessons';
 import ListUsers from 'content/users/ListUsers';
@@ -30,6 +31,20 @@ const routes: RouteObject[] = [
       {
         path: '/login',
         element: <Login />
+      }
+    ]
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <RequireAuth>
+        <SidebarLayout />
+      </RequireAuth>
+    ),
+    children: [
+      {
+        path: '',
+        element: <Dashboard />
       }
     ]
   },

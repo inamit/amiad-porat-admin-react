@@ -41,7 +41,7 @@ const menuItems: MenuItems[] = [
     items: [
       {
         name: 'דף הבית',
-        link: '/overview',
+        link: '/dashboard',
         icon: HomeOutlinedIcon
       }
     ]
