@@ -5,7 +5,7 @@ import User from './user';
 export default class Group {
   public id: string;
   public name: string;
-  public teacher: User | undefined;
+  public teacher: Partial<User> | undefined;
   public subject: string;
   public day: number;
   public hour: string;
@@ -18,7 +18,7 @@ export default class Group {
     day: number,
     hour: string
   ) {
-    const group = new Group(id, name, undefined, subject, day, hour);
+    const group = new Group(id, name, { uid: teacher }, subject, day, hour);
     Group.loadTeacher(group, teacher);
 
     return group;
@@ -27,7 +27,7 @@ export default class Group {
   constructor(
     id: string,
     name: string,
-    teacher: User | undefined,
+    teacher: Partial<User> | undefined,
     subject: string,
     day: number,
     hour: string
