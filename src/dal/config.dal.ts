@@ -1,5 +1,7 @@
 import { collection, getDocs } from 'firebase/firestore';
+import { EnumValue } from 'models/enums/enum.js';
 import { db } from '../firebaseConfig.js';
+import { roomsCollectioname } from './room.dal';
 
 const gradesCollectionName = 'grades';
 const subjectsCollectionName = 'subjects';
@@ -17,7 +19,14 @@ export const getSubjects = async () => {
     collection(db, subjectsCollectionName)
   );
 
-  return subjectsSnapshot.docs.map(
-    (doc) => doc.data() as { label: string; value: string }
-  );
+  return subjectsSnapshot.docs.map((doc) => doc.data() as EnumValue<any>);
+};
+
+export const getRooms = async (): Promise<EnumValue<string>[]> => {
+  const roomsSnapshot = await getDocs(collection(db, roomsCollectioname));
+
+  return roomsSnapshot.docs.map((doc) => ({
+    value: doc.id,
+    label: doc.get('name')
+  }));
 };

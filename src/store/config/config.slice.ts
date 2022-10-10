@@ -4,18 +4,20 @@ import {
   ActionReducerMapBuilder,
   AsyncThunk
 } from '@reduxjs/toolkit';
-import { getGrades, getSubjects } from 'dal/config.dal';
+import { getGrades, getRooms, getSubjects } from 'dal/config.dal';
 import { RootState } from 'store/store';
 import { ConfigModel, initialState, LoadStatus } from './config.model';
 
 export const fetchConfig = () => (dispatch) => {
   dispatch(fetchGrades());
   dispatch(fetchSubjects());
+  dispatch(fetchRooms());
 };
 const fetchGrades = createAsyncThunk('config/fetchGrades', () => getGrades());
 const fetchSubjects = createAsyncThunk('config/fetchSubjects', () =>
   getSubjects()
 );
+const fetchRooms = createAsyncThunk('config/fetchRooms', () => getRooms());
 
 export const configSlice = createSlice({
   name: 'config',
@@ -24,6 +26,7 @@ export const configSlice = createSlice({
   extraReducers: (builder) => {
     addCases(builder, fetchGrades, 'grades');
     addCases(builder, fetchSubjects, 'subjects');
+    addCases(builder, fetchRooms, 'rooms');
   }
 });
 
@@ -47,5 +50,6 @@ const addCases = (
 
 export const selectGrades = (state: RootState) => state.config.grades;
 export const selectSubjects = (state: RootState) => state.config.subjects;
+export const selectRooms = (state: RootState) => state.config.rooms;
 
 export default configSlice.reducer;
