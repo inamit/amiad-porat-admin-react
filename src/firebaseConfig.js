@@ -47,13 +47,13 @@ const appCheck = initializeAppCheck(app, {
 
 if (process.env.NODE_ENV === 'development') {
   console.log(firebaseConfig);
-  // console.log(
-  //   'testing locally -- hitting local auth, firestore and functions emulators'
-  // );
+  console.log(
+    'testing locally -- hitting local auth, firestore and functions emulators'
+  );
 
-  // connectFunctionsEmulator(functions, 'localhost', 5001);
-  // connectAuthEmulator(auth, 'http://localhost:9099');
-  // connectFirestoreEmulator(db, 'localhost', 8082);
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+  connectAuthEmulator(auth, 'http://localhost:9099');
+  connectFirestoreEmulator(db, 'localhost', 8082);
 }
 
 setPersistence(auth, browserLocalPersistence);
