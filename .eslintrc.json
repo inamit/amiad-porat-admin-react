@@ -4,6 +4,7 @@
       2,
       { "extensions": [".js", ".jsx", ".ts", ".tsx"] }
     ],
-    "comma-dangle": 0
+    "comma-dangle": 0,
+    "no-restricted-imports": "off"
   }
 }
