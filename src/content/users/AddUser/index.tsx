@@ -16,7 +16,9 @@ import { FormField } from 'models/fieldsConfigs';
 import { functions } from 'firebaseConfig';
 import withReactContent from 'sweetalert2-react-content';
 import Swal from 'sweetalert2';
-import GenericFormFields from 'components/GenericFormFields';
+import GenericFormFields, {
+  areFieldsValid
+} from 'components/GenericFormFields';
 
 const AddUser = () => {
   const initialValues: AddUserForm = {
@@ -37,37 +39,16 @@ const AddUser = () => {
   const MySwal = withReactContent(Swal);
 
   useEffect(() => {
-    setValid(areFieldsValid());
-  }, [user]);
-
-  const isFieldValid = (field: FormField, addToList: boolean = true) => {
-    const validationResult = field.validationFunction(
-      user[field.objectLocation],
-      field.placeholder
-    );
-
-    if (addToList) {
-      setValidationErrors({
-        ...validationErrors,
-        [field.objectLocation]: validationResult.error?.message
-      });
-    }
-
-    return validationResult.error?.message === undefined;
-  };
-
-  const areFieldsValid = () => {
-    return addUserFields
-      .filter(
-        (field) =>
-          field.showConditions
-            ?.map((condition) =>
-              eval(user[condition.field] + condition.operator + condition.value)
-            )
-            .reduce((final, curr) => final && curr) ?? true
+    setValid(
+      areFieldsValid(
+        addUserFields,
+        user,
+        validationErrors,
+        setValidationErrors,
+        false
       )
-      .reduce((acc, field) => isFieldValid(field, false) && acc, true);
-  };
+    );
+  }, [user]);
 
   const createUser = httpsCallable(functions, 'createUser');
   const addUser = async () => {
@@ -112,14 +93,20 @@ const AddUser = () => {
             formFields={addUserFields}
             formValues={user}
             setValues={setUser}
-            isFieldValid={isFieldValid}
             validationErrors={validationErrors}
+            setValidationErrors={setValidationErrors}
           />
           <Button
             sx={{ '&': { alignSelf: 'center' } }}
             disabled={!valid}
             onClick={() => {
-              areFieldsValid() && addUser();
+              areFieldsValid(
+                addUserFields,
+                user,
+                validationErrors,
+                setValidationErrors,
+                false
+              ) && addUser();
             }}
             variant="contained"
           >

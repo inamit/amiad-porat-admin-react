@@ -144,7 +144,7 @@ const ListGroups = () => {
   const handleCloseSnackbar = () => setSnackbar(null);
 
   const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const group = await updateGroup(newRow);
+    const group = await updateGroup(newRow as Group);
     setSnackbar({ children: 'השיעור התעדכן בהצלחה', severity: 'success' });
     return group;
   }, []);

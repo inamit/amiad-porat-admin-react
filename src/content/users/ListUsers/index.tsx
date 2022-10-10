@@ -185,7 +185,7 @@ const ListUsers = () => {
   const handleCloseSnackbar = () => setSnackbar(null);
 
   const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const user = await updateUser(newRow);
+    const user = await updateUser(newRow as User);
     setSnackbar({ children: 'המשתמש התעדכן בהצלחה', severity: 'success' });
     return user;
   }, []);

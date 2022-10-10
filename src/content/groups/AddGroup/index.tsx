@@ -8,7 +8,9 @@ import {
   Box,
   Button
 } from '@mui/material';
-import GenericFormFields from 'components/GenericFormFields';
+import GenericFormFields, {
+  areFieldsValid
+} from 'components/GenericFormFields';
 import { createNewGroup, teacherHasGroupByDateTime } from 'dal/groups.dal';
 import { getDoc } from 'firebase/firestore';
 import { FormFieldType } from 'models/fieldsConfigs';
@@ -43,39 +45,16 @@ const AddGroup = (props: AddGroupProps) => {
   const [loading, setLoading] = React.useState<boolean>(false);
 
   useEffect(() => {
-    setValid(areFieldsValid(false));
-  }, [group]);
-
-  const isFieldValid = (field: FormFieldType, addToList: boolean = true) => {
-    const validationResult = field.validationFunction(
-      group[field.objectLocation],
-      field.placeholder
-    );
-
-    if (addToList) {
-      setValidationErrors({
-        ...validationErrors,
-        [field.objectLocation]: validationResult.error?.message
-      });
-    }
-
-    return validationResult.error?.message === undefined;
-  };
-
-  const areFieldsValid = (setMessages: boolean) => {
-    return addGroupFields
-      .filter(
-        (field) =>
-          field.showConditions
-            ?.map((condition) =>
-              eval(
-                group[condition.field] + condition.operator + condition.value
-              )
-            )
-            .reduce((final, curr) => final && curr) ?? true
+    setValid(
+      areFieldsValid(
+        addGroupFields,
+        group,
+        validationErrors,
+        setValidationErrors,
+        false
       )
-      .reduce((acc, field) => isFieldValid(field, setMessages) && acc, true);
-  };
+    );
+  }, [group]);
 
   const addGroup = async () => {
     try {
@@ -150,13 +129,19 @@ const AddGroup = (props: AddGroupProps) => {
             formValues={group}
             setValues={setGroup}
             validationErrors={validationErrors}
-            isFieldValid={isFieldValid}
+            setValidationErrors={setValidationErrors}
           />
           <LoadingButton
             sx={{ '&': { alignSelf: 'center' } }}
             disabled={!valid}
             onClick={() => {
-              areFieldsValid(true) && addGroup();
+              areFieldsValid(
+                addGroupFields,
+                group,
+                validationErrors,
+                setValidationErrors,
+                false
+              ) && addGroup();
             }}
             variant="contained"
             loading={loading}
