@@ -13,16 +13,7 @@ import {
   sendPasswordResetEmail,
   signOut
 } from 'firebase/auth';
-
-// const firebaseConfig = {
-//   apiKey: 'AIzaSyDjGsgIDZ-v0ZtBB2Iq3efU7MMz26ajejo',
-//   authDomain: 'amiad-porat-staging.firebaseapp.com',
-//   projectId: 'amiad-porat-staging',
-//   storageBucket: 'amiad-porat-staging.appspot.com',
-//   messagingSenderId: '298508107993',
-//   appId: '1:298508107993:web:9e862f71664b557a9bbec8',
-//   measurementId: 'G-NKD0LLKV7Y'
-// };
+import { getRemoteConfig, fetchAndActivate } from 'firebase/remote-config';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -40,6 +31,14 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
+export const remoteConfig = getRemoteConfig(app);
+
+remoteConfig.defaultConfig = {
+  unscheduledStudentWhatsappMessage:
+    'היי, מה קורה? שמתי לב שלא קבעת תגבור לשבוע הקרוב!'
+};
+
+fetchAndActivate(remoteConfig);
 
 const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('6LdQPbkhAAAAAH0R1pu-2gijKr5MhBYfQTiGT6v-'),
