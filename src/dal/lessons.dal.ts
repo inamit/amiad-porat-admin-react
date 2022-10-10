@@ -125,3 +125,26 @@ export const getLessonsToOpen = async (
 
   return lessonsToOpen;
 };
+
+export const getScheduledStudentsUidBetween = async (
+  start: Date,
+  end: Date
+) => {
+  const lessonsQuery = query(
+    collection(db, lessonsCollectionName),
+    where('date', '>=', start),
+    where('date', '<=', end)
+  );
+
+  const lessons = await getDocs(lessonsQuery);
+
+  const lessonsArr = [].concat(
+    ...lessons.docs.map((lesson) =>
+      (lesson.data() as Lesson).students
+        .filter((value) => value.status === StudentStatus.Scheduled)
+        .map((student) => student.student?.uid)
+    )
+  );
+
+  return lessonsArr;
+};
