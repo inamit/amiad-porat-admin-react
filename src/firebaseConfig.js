@@ -41,19 +41,19 @@ remoteConfig.defaultConfig = {
 fetchAndActivate(remoteConfig);
 
 const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LdQPbkhAAAAAH0R1pu-2gijKr5MhBYfQTiGT6v-'),
+  provider: new ReCaptchaV3Provider(process.env.REACT_APP_RECAPTCHA_KEY),
   isTokenAutoRefreshEnabled: true
 });
 
 if (process.env.NODE_ENV === 'development') {
   console.log(firebaseConfig);
-  console.log(
-    'testing locally -- hitting local auth, firestore and functions emulators'
-  );
+  // console.log(
+  //   'testing locally -- hitting local auth, firestore and functions emulators'
+  // );
 
-  connectFunctionsEmulator(functions, 'localhost', 5001);
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  connectFirestoreEmulator(db, 'localhost', 8082);
+  // connectFunctionsEmulator(functions, 'localhost', 5001);
+  // connectAuthEmulator(auth, 'http://localhost:9099');
+  // connectFirestoreEmulator(db, 'localhost', 8082);
 }
 
 setPersistence(auth, browserLocalPersistence);
