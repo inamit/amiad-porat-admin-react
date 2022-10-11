@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { useRef, useState } from 'react';
 import NotificationsActiveTwoToneIcon from '@mui/icons-material/NotificationsActiveTwoTone';
+import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
 import { styled } from '@mui/material/styles';
 
 import { formatDistance, subDays } from 'date-fns';
@@ -43,6 +44,7 @@ const NotificationsBadge = styled(Badge)(
 function HeaderNotifications() {
   const ref = useRef<any>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
+  const count = 0;
 
   const handleOpen = (): void => {
     setOpen(true);
@@ -56,15 +58,19 @@ function HeaderNotifications() {
     <>
       <Tooltip arrow title="התראות">
         <IconButton color="primary" ref={ref} onClick={handleOpen}>
-          <NotificationsBadge
-            badgeContent={1}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right'
-            }}
-          >
-            <NotificationsActiveTwoToneIcon />
-          </NotificationsBadge>
+          {count > 0 ? (
+            <NotificationsBadge
+              badgeContent={1}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right'
+              }}
+            >
+              <NotificationsActiveTwoToneIcon />
+            </NotificationsBadge>
+          ) : (
+            <NotificationsTwoToneIcon />
+          )}
         </IconButton>
       </Tooltip>
       <Popover
