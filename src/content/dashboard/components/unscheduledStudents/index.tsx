@@ -18,6 +18,8 @@ import { remoteConfig } from 'firebaseConfig';
 const UnscheduledStudents = (props) => {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [students, setStudents] = React.useState<User[]>([]);
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + 7);
 
   useEffect(() => {
     loadStudents();
@@ -30,8 +32,6 @@ const UnscheduledStudents = (props) => {
 
   const loadStudents = async () => {
     setLoading(true);
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 7);
 
     const scheduledStudents = await getScheduledStudentsUidBetween(
       new Date(),
@@ -53,7 +53,10 @@ const UnscheduledStudents = (props) => {
   };
   return (
     <Card>
-      <CardHeader title="תלמידים שלא קבעו תגבור לשבוע הקרוב" />
+      <CardHeader
+        title="תלמידים שלא קבעו תגבור לשבוע הקרוב"
+        subheader={`היום עד ${endDate.toLocaleDateString('he-IL')}`}
+      />
       <CardContent>
         {loading ? (
           <Skeleton />

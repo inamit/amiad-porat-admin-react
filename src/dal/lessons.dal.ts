@@ -129,22 +129,23 @@ export const getLessonsToOpen = async (
 export const getScheduledStudentsUidBetween = async (
   start: Date,
   end: Date
-) => {
+): Promise<string[]> => {
   const lessonsQuery = query(
     collection(db, lessonsCollectionName),
     where('date', '>=', start),
     where('date', '<=', end)
   );
 
-  const lessons = await getDocs(lessonsQuery);
+  const lessons = await getDocs(lessonsQuery.withConverter(lessonConverter));
 
-  const lessonsArr = [].concat(
-    ...lessons.docs.map((lesson) =>
-      (lesson.data() as Lesson).students
-        .filter((value) => value.status === StudentStatus.Scheduled)
+  const lessonsArr = lessons.docs
+    .map((lesson) =>
+      lesson
+        .data()
+        .students.filter((value) => value.status === StudentStatus.Scheduled)
         .map((student) => student.student?.uid)
     )
-  );
+    .reduce((acc, uidArr) => [...acc, ...uidArr], []);
 
   return lessonsArr;
 };

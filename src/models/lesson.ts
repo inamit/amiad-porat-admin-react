@@ -10,7 +10,10 @@ export default class Lesson {
   public end: Date;
   public isOpen: boolean;
   public tutor: Partial<User> | undefined;
-  public students: { student: User | undefined; status: StudentStatus }[];
+  public students: {
+    student: Partial<User> | undefined;
+    status: StudentStatus;
+  }[];
   public subject: string;
   public room: Partial<Room> | undefined;
   public maxStudents: number;
@@ -45,7 +48,10 @@ export default class Lesson {
       date,
       isOpen,
       { uid: tutor },
-      [],
+      students.map((values) => ({
+        student: { uid: values.student },
+        status: values.status
+      })),
       subject,
       { id: room },
       maxStudents
@@ -60,7 +66,7 @@ export default class Lesson {
     date: Date,
     isOpen: boolean,
     tutor: Partial<User> | undefined,
-    students: { student: User; status: StudentStatus }[],
+    students: { student: Partial<User>; status: StudentStatus }[],
     subject: string,
     room: Partial<Room> | undefined,
     maxStudents: number
