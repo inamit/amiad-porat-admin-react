@@ -61,9 +61,8 @@ const UnscheduledStudents = (props) => {
           <List>
             {students.map((student) => {
               return (
-                <ListItem>
+                <ListItem key={student.uid}>
                   <ListItemText
-                    key={student.uid}
                     primary={`${student.firstName} ${student.lastName}`}
                   ></ListItemText>
                   <a
