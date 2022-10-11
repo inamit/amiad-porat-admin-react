@@ -131,6 +131,7 @@ const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
 };
 
 const ListGroups = () => {
+  const [loading, setLoading] = React.useState<boolean>(true);
   const [rows, setRows] = React.useState<GridRowsProp<Group>>([]);
   type Row = typeof rows[number];
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
@@ -154,14 +155,22 @@ const ListGroups = () => {
   }, []);
 
   useEffect(() => {
-    getUsersWithRoleBiggerThan(UserRoles.TEACHER).then((users) => {
-      setTeachers(users);
-    });
-
-    getAllGroups().then((groups) => {
-      setRows(groups);
-    });
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      const users = await getUsersWithRoleBiggerThan(UserRoles.TEACHER);
+      setTeachers(users);
+
+      const groups = await getAllGroups();
+      setRows(groups);
+    } finally {
+      setLoading(false);
+    }
+  };
   const deleteGroup = React.useCallback(
     (id: GridRowId) => () => {
       // TODO: implement delete group
@@ -312,6 +321,7 @@ const ListGroups = () => {
             experimentalFeatures={{ newEditingApi: true }}
             processRowUpdate={processRowUpdate}
             onProcessRowUpdateError={handleProcessRowUpdateError}
+            loading={loading}
           />
         </CardContent>
       </Card>

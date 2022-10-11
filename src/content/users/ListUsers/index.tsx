@@ -200,15 +200,17 @@ const ListUsers = () => {
   }, []);
 
   const loadData = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const users = await getAllUsers();
-    setRows(users);
+      const users = await getAllUsers();
+      setRows(users);
 
-    const groups = await getAllGroups();
-    setGroups(groups);
-
-    setLoading(false);
+      const groups = await getAllGroups();
+      setGroups(groups);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRowEditStart = (
