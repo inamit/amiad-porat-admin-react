@@ -48,7 +48,10 @@ export const createUser = functions.https.onCall(async (data, context) => {
       password: data.password
     });
 
-    await admin.auth().setCustomUserClaims(uid, { role: data.role });
+    functions.logger.info(
+      `User with email ${data.email} created with uid: ${uid}`
+    );
+    functions.logger.debug(`Creating user ${uid} record in firestore`);
 
     const info = {
       firstName: data.firstName,
@@ -67,6 +70,10 @@ export const createUser = functions.https.onCall(async (data, context) => {
       case 'auth/email-already-exists':
         throw new HttpsError('already-exists', 'המייל כבר קיים במערכת');
       default:
+        functions.logger.error(
+          `Unexpected error occured while creating new user.`,
+          error
+        );
         throw new HttpsError('internal', 'קרתה תקלה. פנה לתמיכה');
     }
   }
