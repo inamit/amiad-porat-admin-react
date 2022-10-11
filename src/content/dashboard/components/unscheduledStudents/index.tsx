@@ -5,7 +5,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  Skeleton
+  Skeleton,
+  Typography
 } from '@mui/material';
 import { getScheduledStudentsUidBetween } from 'dal/lessons.dal';
 import { getUsersWithRole } from 'dal/users.dal';
@@ -60,7 +61,7 @@ const UnscheduledStudents = (props) => {
       <CardContent>
         {loading ? (
           <Skeleton />
-        ) : (
+        ) : students.length > 0 ? (
           <List>
             {students.map((student) => {
               return (
@@ -78,6 +79,8 @@ const UnscheduledStudents = (props) => {
               );
             })}
           </List>
+        ) : (
+          <Typography variant="h4">כולם קבעו תגבורים 🥳</Typography>
         )}
       </CardContent>
     </Card>
