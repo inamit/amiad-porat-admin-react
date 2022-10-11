@@ -39,7 +39,7 @@ export const addUserFields: FormFieldType[] = [
     validationFunction: isEmail
   },
   {
-    objectLocation: 'phoneNumber',
+    objectLocation: 'phoneNo',
     icon: PhoneOutlinedIcon,
     placeholder: 'מספר טלפון',
     required: true,

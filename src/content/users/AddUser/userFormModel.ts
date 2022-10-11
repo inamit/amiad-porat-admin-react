@@ -2,7 +2,7 @@ export interface AddUserForm {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNo: string;
   birthDate: Date;
   password: string;
   role: number;

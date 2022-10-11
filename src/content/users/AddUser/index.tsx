@@ -25,7 +25,7 @@ const AddUser = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phoneNumber: '',
+    phoneNo: '',
     birthDate: undefined,
     password: '',
     role: undefined
