@@ -121,9 +121,13 @@ export const getAllUsers = functions.https.onCall(async (data, context) => {
       };
 
       if (response.group) {
-        const group = (
-          await admin.firestore().collection('groups').doc(response.group).get()
-        ).data()!;
+        const groupDoc = await admin
+          .firestore()
+          .collection('groups')
+          .doc(response.group)
+          .get();
+        const group = groupDoc.data()!;
+        group.id = groupDoc.id;
 
         const teacher = await admin
           .firestore()
