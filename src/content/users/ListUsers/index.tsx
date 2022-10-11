@@ -169,6 +169,7 @@ const SubjectsMultiSelectComponent = (props) => {
 };
 
 const ListUsers = () => {
+  const [loading, setLoading] = React.useState<boolean>(true);
   const [rows, setRows] = React.useState<GridRowsProp<User>>([]);
   type Row = typeof rows[number];
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
@@ -195,14 +196,20 @@ const ListUsers = () => {
   }, []);
 
   useEffect(() => {
-    getAllUsers().then((users) => {
-      setRows(users);
-    });
-
-    getAllGroups().then((groups) => {
-      setGroups(groups);
-    });
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+
+    const users = await getAllUsers();
+    setRows(users);
+
+    const groups = await getAllGroups();
+    setGroups(groups);
+
+    setLoading(false);
+  };
 
   const handleRowEditStart = (
     params: GridRowParams,
@@ -236,7 +243,7 @@ const ListUsers = () => {
   const deleteUser = React.useCallback(
     (id: GridRowId) => () => {
       // TODO: implement delete user
-      alert(`DELETE ${id}`);
+      alert(`הפונקציה הזאת תתאפשר בקרוב!`);
     },
     []
   );
@@ -457,6 +464,7 @@ const ListUsers = () => {
             rowModesModel={rowModesModel}
             onRowEditStart={handleRowEditStart}
             onRowEditStop={handleRowEditStop}
+            loading={loading}
           />
         </CardContent>
       </Card>
