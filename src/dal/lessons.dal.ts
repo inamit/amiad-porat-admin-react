@@ -120,7 +120,7 @@ export const getLessonsToOpen = async (
     (lesson) =>
       lesson.students.filter(
         (value) => value.status === StudentStatus.Scheduled
-      ).length < parseInt(lesson.maxStudents)
+      ).length < lesson.maxStudents
   );
 
   return lessonsToOpen;

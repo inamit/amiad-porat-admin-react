@@ -13,7 +13,7 @@ export default class Lesson {
   public students: { student: User | undefined; status: StudentStatus }[];
   public subject: string;
   public room: Partial<Room> | undefined;
-  public maxStudents: string;
+  public maxStudents: number;
 
   name = 'תגבור';
 
@@ -26,7 +26,7 @@ export default class Lesson {
       [],
       '',
       Room.empty(),
-      '0'
+      0
     );
   }
 
@@ -38,7 +38,7 @@ export default class Lesson {
     students: { student: string; status: StudentStatus }[],
     subject: string,
     room: string,
-    maxStudents: string
+    maxStudents: number
   ): Lesson {
     const lesson = new Lesson(
       id,
@@ -63,7 +63,7 @@ export default class Lesson {
     students: { student: User; status: StudentStatus }[],
     subject: string,
     room: Partial<Room> | undefined,
-    maxStudents: string
+    maxStudents: number
   ) {
     this.id = id;
     this.start = date;

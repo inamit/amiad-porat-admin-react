@@ -293,7 +293,7 @@ const ListLessons = (props) => {
         dataField: 'maxStudents',
         editorType: 'dxTextBox',
         editorOptions: {
-          value: '5',
+          value: 5,
           mode: 'number'
         }
       },

@@ -59,7 +59,7 @@ const AddBulkLessons = (props) => {
             [],
             lesson.subject,
             { id: '' },
-            '5'
+            5
           );
           addedLessons.push(newLesson);
 
