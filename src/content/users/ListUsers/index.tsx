@@ -317,8 +317,11 @@ const ListUsers = () => {
         align: 'center',
         renderCell: (params) => getEnumByValue(grades, params.row.grade)?.label,
         type: 'singleSelect',
-        valueOptions: () => {
-          return grades;
+        valueOptions: (params) => {
+          return (params.row.role as unknown as number) ===
+            UserRoles.STUDENT.value
+            ? grades
+            : [];
         }
       },
       {
@@ -338,8 +341,10 @@ const ListUsers = () => {
         type: 'singleSelect',
         valueGetter: (params) =>
           params.row.group?.value ?? params.row.group?.id ?? '',
-        valueOptions: () =>
-          groups.map((group) => ({ label: group.name, value: group.id })),
+        valueOptions: (params) =>
+          (params.row.role as unknown as number) === UserRoles.STUDENT.value
+            ? groups.map((group) => ({ label: group.name, value: group.id }))
+            : [],
         valueSetter: (params) => {
           return {
             ...params.row,
@@ -361,7 +366,10 @@ const ListUsers = () => {
           });
         },
         type: 'singleSelect',
-        valueOptions: () => subjects,
+        valueOptions: (params) =>
+          (params.row.role as unknown as number) === UserRoles.STUDENT.value
+            ? subjects
+            : [],
         filterOperators: subjectsFilter
       },
       {
