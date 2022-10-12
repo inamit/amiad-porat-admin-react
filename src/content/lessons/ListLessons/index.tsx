@@ -196,31 +196,35 @@ const ListLessons = (props) => {
       return getLessonsAndGroups(options.filter[0][0]);
     },
     update: async (key, values) => {
-      const updatedLesson = new Lesson(
-        key.id,
-        values.startDate,
-        values.isOpen,
-        { uid: values.tutorUid },
-        [],
-        values.subject,
-        { id: values.roomId },
-        values.maxStudents
-      );
+      try {
+        const updatedLesson = new Lesson(
+          key.id,
+          values.startDate,
+          values.isOpen,
+          { uid: values.tutorUid },
+          [],
+          values.subject,
+          { id: values.roomId },
+          values.maxStudents
+        );
 
-      let available = true;
-      if (
-        (key.startDate as Date).getTime() !==
-        (values.startDate as Date).getTime()
-      ) {
-        available = await validateAvailability(updatedLesson);
-      } else if (key.tutorUid !== values.tutorUid) {
-        available = await validateTutorAvailability(updatedLesson);
-      } else if (key.roomId !== values.roomId) {
-        available = await validateRoomAvailability(updatedLesson);
-      }
+        let available = true;
+        if (
+          (key.startDate as Date).getTime() !==
+          (values.startDate as Date).getTime()
+        ) {
+          available = await validateAvailability(updatedLesson);
+        } else if (key.tutorUid !== values.tutorUid) {
+          available = await validateTutorAvailability(updatedLesson);
+        } else if (key.roomId !== values.roomId) {
+          available = await validateRoomAvailability(updatedLesson);
+        }
 
-      if (available) {
-        return updateLesson(updatedLesson);
+        if (available) {
+          return updateLesson(updatedLesson);
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
     insert: async (values) => {
