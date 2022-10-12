@@ -40,3 +40,7 @@
 .swal2-container {
   z-index: 100000 !important;
 }
+
+.dx-timeview-field {
+  direction: ltr;
+}
