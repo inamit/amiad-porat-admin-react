@@ -66,7 +66,7 @@ export const createUser = functions.https.onCall(async (data, context) => {
 
     await admin.firestore().collection('users').doc(uid).set(info);
   } catch (error) {
-    switch (error.code) {
+    switch ((error as any).code) {
       case 'auth/email-already-exists':
         throw new HttpsError('already-exists', 'המייל כבר קיים במערכת');
       default:
@@ -80,103 +80,58 @@ export const createUser = functions.https.onCall(async (data, context) => {
 });
 
 export const getAllUsers = functions.https.onCall(async (data, context) => {
-  if (context.app == undefined) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'The function must be called from an App Check verified app.'
+  try {
+    if (context.app == undefined) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'The function must be called from an App Check verified app.'
+      );
+    }
+
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'User cannot access this information'
+      );
+    }
+
+    if (!isUserRoleAbove(context.auth.uid, UserRole.ADMIN)) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'User cannot access this information'
+      );
+    }
+
+    const { users } = await admin.auth().listUsers();
+
+    return await Promise.all(
+      users.map(async ({ uid, email, metadata, customClaims, phoneNumber }) => {
+        try {
+          const userInfo: DocumentSnapshot = await admin
+            .firestore()
+            .collection('users')
+            .doc(uid)
+            .get();
+
+          const response: any = {
+            ...userInfo.data(),
+            uid,
+            email,
+            metadata,
+            customClaims,
+            phoneNumber
+          };
+
+          return response;
+        } catch (e) {
+          functions.logger.error(e);
+        }
+      })
     );
+  } catch (e) {
+    functions.logger.error(e);
+    console.log(e);
   }
 
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'User cannot access this information'
-    );
-  }
-
-  if (!isUserRoleAbove(context.auth.uid, UserRole.ADMIN)) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'User cannot access this information'
-    );
-  }
-
-  const { users } = await admin.auth().listUsers();
-
-  return await Promise.all(
-    users.map(async ({ uid, email, metadata, customClaims, phoneNumber }) => {
-      const userInfo: DocumentSnapshot = await admin
-        .firestore()
-        .collection('users')
-        .doc(uid)
-        .get();
-
-      const response: any = {
-        ...userInfo.data(),
-        uid,
-        email,
-        metadata,
-        customClaims,
-        phoneNumber
-      };
-
-      if (response.group) {
-        const groupDoc = await admin
-          .firestore()
-          .collection('groups')
-          .doc(response.group)
-          .get();
-        const group = groupDoc.data()!;
-        group.id = groupDoc.id;
-
-        const teacher = await admin
-          .firestore()
-          .collection('users')
-          .doc(group?.teacher)
-          .get();
-
-        group.teacher = {};
-
-        group.teacher.firstName = teacher.get('firstName');
-        group.teacher.lastName = teacher.get('lastName');
-        response.group = group;
-      }
-
-      return response;
-    })
-  );
-});
-
-export const getUsersByRole = functions.https.onCall(async (data, context) => {
-  if (context.app == undefined) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'The function must be called from an App Check verified app.'
-    );
-  }
-
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'User cannot access this information'
-    );
-  }
-
-  if (!isUserRoleAbove(context.auth.uid, UserRole.ADMIN)) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'User cannot access this information'
-    );
-  }
-
-  const docs = await admin
-    .firestore()
-    .collection('users')
-    .where('role', '==', data.role)
-    .get();
-
-  const users: any[] = [];
-  docs.forEach((doc) => users.push({ uid: doc.id, ...doc.data() }));
-
-  return users;
+  return [];
 });
