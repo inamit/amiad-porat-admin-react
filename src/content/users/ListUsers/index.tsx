@@ -17,8 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import React, { useEffect } from 'react';
-import { getAllUsers, updateUser } from 'dal/users.dal';
+import React from 'react';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import { styled } from '@mui/material/styles';
@@ -27,7 +26,7 @@ import CardHeader from '@mui/material/CardHeader';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
-import { useAppSelector } from 'store/store';
+import { store, useAppDispatch, useAppSelector } from 'store/store';
 import { selectGrades, selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
 import Alert, { AlertProps } from '@mui/material/Alert';
@@ -40,8 +39,13 @@ import {
   Select,
   Tooltip
 } from '@mui/material';
-import { getAllGroups } from 'dal/groups.dal';
-import Group from 'models/group';
+import {
+  selectUsers,
+  selectUsersLoadStatus,
+  updateUser
+} from 'store/users/users.slice';
+import { selectGroups } from 'store/groups/groups.slice';
+import { LoadStatus } from 'store/loadStatus';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -169,15 +173,16 @@ const SubjectsMultiSelectComponent = (props) => {
 };
 
 const ListUsers = () => {
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [rows, setRows] = React.useState<GridRowsProp<User>>([]);
-  type Row = typeof rows[number];
+  const dispatch = useAppDispatch();
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
-  const [groups, setGroups] = React.useState<Group[]>([]);
+
   const subjects = useAppSelector(selectSubjects).values;
   const grades = useAppSelector(selectGrades).values;
+  const users = selectUsers(store.getState());
+  const loadStatus = useAppSelector(selectUsersLoadStatus);
+  const groups = selectGroups(store.getState());
 
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
@@ -186,7 +191,7 @@ const ListUsers = () => {
   const handleCloseSnackbar = () => setSnackbar(null);
 
   const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const user = await updateUser(newRow as User);
+    const user = dispatch(updateUser({ id: newRow.uid, changes: newRow }));
     setSnackbar({ children: 'המשתמש התעדכן בהצלחה', severity: 'success' });
     return user;
   }, []);
@@ -194,24 +199,6 @@ const ListUsers = () => {
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
     setSnackbar({ children: error.message, severity: 'error' });
   }, []);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      const users = await getAllUsers();
-      setRows(users);
-
-      const groups = await getAllGroups();
-      setGroups(groups);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRowEditStart = (
     params: GridRowParams,
@@ -271,7 +258,7 @@ const ListUsers = () => {
     }
   ];
 
-  const columns = React.useMemo<GridColumns<Row>>(
+  const columns = React.useMemo<GridColumns<GridRowsProp<User>[number]>>(
     () => [
       {
         field: 'firstName',
@@ -332,13 +319,19 @@ const ListUsers = () => {
         editable: true,
         width: 150,
         renderCell: (params) => {
-          return (
-            <Tooltip
-              title={`מורה: ${params.row.group?.teacher?.firstName} ${params.row.group?.teacher?.lastName}`}
-            >
-              <div>{params.row.group?.name}</div>
-            </Tooltip>
-          );
+          const groups = selectGroups(store.getState());
+          return params.row.group?.map((group) => {
+            const groupInfo = groups.find(
+              (groupOption) => groupOption.id === group
+            );
+            return (
+              <Tooltip
+                title={`מורה: ${groupInfo?.teacher?.firstName} ${groupInfo?.teacher?.lastName}`}
+              >
+                <Chip key={group} label={groupInfo?.name} />
+              </Tooltip>
+            );
+          });
         },
         type: 'singleSelect',
         valueGetter: (params) =>
@@ -463,7 +456,7 @@ const ListUsers = () => {
               }
             }}
             autoHeight={true}
-            rows={rows}
+            rows={users}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.uid}
@@ -474,7 +467,7 @@ const ListUsers = () => {
             rowModesModel={rowModesModel}
             onRowEditStart={handleRowEditStart}
             onRowEditStop={handleRowEditStop}
-            loading={loading}
+            loading={loadStatus === LoadStatus.LOADING}
           />
         </CardContent>
       </Card>

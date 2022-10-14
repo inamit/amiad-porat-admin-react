@@ -5,17 +5,21 @@ import { groupsMiddleware } from './groups/groups.effects';
 import { groupsReducer, selectGroups } from './groups/groups.slice';
 import { lessonsMiddleware } from './lessons/lessons.effects';
 import { lessonsReducer, selectLessons } from './lessons/lessons.slice';
+import { usersMiddleware } from './users/users.effects';
+import { usersReducer } from './users/users.slice';
 
 export const store = configureStore({
   reducer: {
     config: configReducer,
     groups: groupsReducer,
-    lessons: lessonsReducer
+    lessons: lessonsReducer,
+    users: usersReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat(
       groupsMiddleware.middleware,
-      lessonsMiddleware.middleware
+      lessonsMiddleware.middleware,
+      usersMiddleware.middleware
     )
 });
 

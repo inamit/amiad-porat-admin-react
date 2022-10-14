@@ -58,7 +58,7 @@ export const addStudentFields: FormFieldType[] = [
     icon: SchoolOutlinedIcon,
     asyncChildren: getGroupsForSelect,
     required: true,
-    multiple: false,
-    validationFunction: isRequired
+    multiple: true,
+    validationFunction: isArrayRequired
   }
 ];

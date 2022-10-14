@@ -65,6 +65,7 @@ export const createUser = functions.https.onCall(async (data, context) => {
     };
 
     await admin.firestore().collection('users').doc(uid).set(info);
+    return { uid };
   } catch (error) {
     switch ((error as any).code) {
       case 'auth/email-already-exists':

@@ -19,6 +19,7 @@ import { loadGroups } from 'store/groups/groups.slice';
 import { loadLessons } from 'store/lessons/lessons.slice';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from 'firebaseConfig';
+import { loadUsers } from 'store/users/users.slice';
 
 const App = () => {
   const content = useRoutes(routes);
@@ -28,6 +29,7 @@ const App = () => {
   useEffect(() => {
     if (user) {
       dispatch(fetchConfig());
+      dispatch(loadUsers());
       dispatch(loadGroups());
 
       const today = new Date();

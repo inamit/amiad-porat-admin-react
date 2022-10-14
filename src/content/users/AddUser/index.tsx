@@ -19,6 +19,8 @@ import Swal from 'sweetalert2';
 import GenericFormFields, {
   areFieldsValid
 } from 'components/GenericFormFields';
+import { useAppDispatch } from 'store/store';
+import { createNewUser } from 'store/users/users.slice';
 
 const AddUser = () => {
   const initialValues: AddUserForm = {
@@ -37,6 +39,7 @@ const AddUser = () => {
   const [valid, setValid] = React.useState<boolean>(false);
 
   const MySwal = withReactContent(Swal);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     setValid(
@@ -55,10 +58,11 @@ const AddUser = () => {
     const userToSend = { ...user };
 
     try {
-      MySwal.showLoading();
-      const response = await createUser({ ...userToSend });
-      MySwal.hideLoading();
-      MySwal.fire({ icon: 'success', title: 'המשתמש נוסף בהצלחה!' });
+      // MySwal.showLoading();
+      // const response = await createUser({ ...userToSend });
+      // MySwal.hideLoading();
+      // MySwal.fire({ icon: 'success', title: 'המשתמש נוסף בהצלחה!' });
+      dispatch(createNewUser(userToSend));
     } catch (error) {
       Swal.hideLoading();
       Swal.fire({
