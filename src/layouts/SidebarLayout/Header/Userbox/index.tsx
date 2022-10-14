@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Avatar,
@@ -9,19 +9,14 @@ import {
   Divider,
   Hidden,
   lighten,
-  List,
-  ListItem,
-  ListItemText,
   Popover,
   Typography
 } from '@mui/material';
 
-import InboxTwoToneIcon from '@mui/icons-material/InboxTwoTone';
 import { styled } from '@mui/material/styles';
 import ExpandMoreTwoToneIcon from '@mui/icons-material/ExpandMoreTwoTone';
-import AccountBoxTwoToneIcon from '@mui/icons-material/AccountBoxTwoTone';
 import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
-import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
+import { auth } from 'firebaseConfig';
 
 const UserBoxButton = styled(Button)(
   ({ theme }) => `
@@ -68,6 +63,8 @@ function HeaderUserbox() {
   const ref = useRef<any>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
 
+  const navigate = useNavigate();
+
   const handleOpen = (): void => {
     setOpen(true);
   };
@@ -77,9 +74,10 @@ function HeaderUserbox() {
   };
 
   const signOut = () => {
-    // TODO: Implement sign out
     setOpen(false);
-    alert('This will sign out');
+
+    auth.signOut();
+    navigate('/login');
   };
 
   return (
