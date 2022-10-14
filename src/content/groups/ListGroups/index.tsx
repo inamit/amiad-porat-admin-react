@@ -17,11 +17,7 @@ import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import AddGroup from '../AddGroup';
-import {
-  getAllGroups,
-  teacherHasGroupByDateTime,
-  updateGroup
-} from 'dal/groups.dal';
+import { teacherHasGroupByDateTime } from 'dal/groups.dal';
 import Group from 'models/group';
 import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import { TimePicker } from '@mui/x-date-pickers';
@@ -33,12 +29,18 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
-import { useAppSelector } from 'store/store';
+import { store, useAppDispatch, useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
 import { getHourStringFromDate } from 'utils/dateUtils';
 import Alert, { AlertProps } from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
+import {
+  selectGroups,
+  selectGroupsLoadStatus,
+  updateGroup
+} from 'store/groups/groups.slice';
+import { LoadStatus } from 'store/loadStatus';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -131,12 +133,12 @@ const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
 };
 
 const ListGroups = () => {
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [rows, setRows] = React.useState<GridRowsProp<Group>>([]);
-  type Row = typeof rows[number];
+  const dispatch = useAppDispatch();
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
   const subjects = useAppSelector(selectSubjects).values;
+  const groups = selectGroups(store.getState());
+  const loadingStatus = useAppSelector(selectGroupsLoadStatus);
 
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
@@ -145,7 +147,7 @@ const ListGroups = () => {
   const handleCloseSnackbar = () => setSnackbar(null);
 
   const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const group = await updateGroup(newRow as Group);
+    const group = dispatch(updateGroup({ id: newRow.id, changes: newRow }));
     setSnackbar({ children: 'השיעור התעדכן בהצלחה', severity: 'success' });
     return group;
   }, []);
@@ -160,15 +162,9 @@ const ListGroups = () => {
 
   const loadData = async () => {
     try {
-      setLoading(true);
-
       const users = await getUsersWithRoleBiggerThan(UserRoles.TEACHER);
       setTeachers(users);
-
-      const groups = await getAllGroups();
-      setRows(groups);
     } finally {
-      setLoading(false);
     }
   };
   const deleteGroup = React.useCallback(
@@ -179,7 +175,7 @@ const ListGroups = () => {
     []
   );
 
-  const columns = React.useMemo<GridColumns<Row>>(
+  const columns = React.useMemo<GridColumns<GridRowsProp<Group>[number]>>(
     () => [
       {
         field: 'name',
@@ -314,24 +310,26 @@ const ListGroups = () => {
         <CardContent>
           <DataGrid
             autoHeight={true}
-            rows={rows}
+            rows={groups}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.id}
             experimentalFeatures={{ newEditingApi: true }}
             processRowUpdate={processRowUpdate}
             onProcessRowUpdateError={handleProcessRowUpdateError}
-            loading={loading}
+            loading={loadingStatus === LoadStatus.LOADING}
+            error={
+              loadingStatus === LoadStatus.FAILED
+                ? 'התרחשה שגיאה בשליפת השיעורים'
+                : null
+            }
           />
         </CardContent>
       </Card>
       <AddGroup
         isOpen={addGroupOpen}
-        onClose={(event, reason, addedGroup?) => {
+        onClose={(event, reason) => {
           setAddGroupOpen(false);
-          if (addedGroup) {
-            setRows([...rows, addedGroup]);
-          }
         }}
       />
       {!!snackbar && (

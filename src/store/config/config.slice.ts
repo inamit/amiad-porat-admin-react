@@ -5,8 +5,9 @@ import {
   AsyncThunk
 } from '@reduxjs/toolkit';
 import { getGrades, getRooms, getSubjects } from 'dal/config.dal';
+import { LoadStatus } from 'store/loadStatus';
 import { RootState } from 'store/store';
-import { ConfigModel, initialState, LoadStatus } from './config.model';
+import { ConfigModel, initialState } from './config.model';
 
 export const fetchConfig = () => (dispatch) => {
   dispatch(fetchGrades());

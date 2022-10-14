@@ -1,10 +1,5 @@
 import { EnumValue } from 'models/enums/enum';
-
-export enum LoadStatus {
-  IDLE,
-  LOADING,
-  FAILED
-}
+import { LoadStatus } from 'store/loadStatus';
 
 export type ConfigValues = { values: EnumValue<any>[]; status: LoadStatus };
 export interface ConfigModel {

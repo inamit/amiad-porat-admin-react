@@ -8,7 +8,8 @@ import {
   query,
   setDoc,
   where,
-  WhereFilterOp
+  WhereFilterOp,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from 'firebaseConfig';
 import StudentStatus from 'models/enums/studentStatus';
@@ -63,6 +64,12 @@ export const createNewLessonFromLessonObject = async (
   );
 
   return (await getDoc(doc.withConverter(lessonConverter))).data();
+};
+
+export const createMultipleLessons = async (lessons: Lesson[]) => {
+  return Promise.all(
+    lessons.map((lesson) => createNewLessonFromLessonObject(lesson))
+  );
 };
 
 export const loadLessonsBetween = async (

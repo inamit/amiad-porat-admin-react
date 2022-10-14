@@ -15,13 +15,30 @@ import { fetchConfig } from 'store/config/config.slice';
 import config from 'devextreme/core/config';
 import { loadMessages, locale } from 'devextreme/localization';
 import heMessages from 'localization/devexpress-he.json';
+import { loadGroups } from 'store/groups/groups.slice';
+import { loadLessons } from 'store/lessons/lessons.slice';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from 'firebaseConfig';
 
 const App = () => {
   const content = useRoutes(routes);
   const dispatch = useAppDispatch();
+  const [user, loading, error] = useAuthState(auth);
 
   useEffect(() => {
-    dispatch(fetchConfig());
+    if (user) {
+      dispatch(fetchConfig());
+      dispatch(loadGroups());
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const end = new Date(today);
+      end.setDate(end.getDate() + 7);
+      dispatch(loadLessons({ startDate: today, endDate: end }));
+    }
+  }, [user]);
+
+  useEffect(() => {
     config({ rtlEnabled: true });
     loadMessages(heMessages);
     locale('he');

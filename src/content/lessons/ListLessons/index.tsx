@@ -1,7 +1,7 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
 import { getAllGroups } from 'dal/groups.dal';
-import { useAppSelector } from 'store/store';
+import { selectSchedule, useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
@@ -40,6 +40,12 @@ import AppointmentTooltip from './AppointmentTooltip';
 import { WhereFilterOp } from 'firebase/firestore';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import OpenLessons from '../OpenLessons';
+import {
+  createBulkLessons,
+  loadLessons,
+  selectMaxLessonsDate,
+  selectMinLessonsDate
+} from 'store/lessons/lessons.slice';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute',
@@ -52,10 +58,15 @@ const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
 const ListLessons = (props) => {
   const MySwal = withReactContent(Swal);
   const scheduler = useRef<Scheduler>(null);
+  const dispatch = useAppDispatch();
 
-  const [groups, setGroups] = React.useState(null);
-  const [addLessonOpen, setAddLessonOpen] = React.useState<boolean>(false);
+  const minDate = useAppSelector(selectMinLessonsDate);
+  const maxDate = useAppSelector(selectMaxLessonsDate);
+
+  const [addBulkLessonOpen, setAddBulkLessonOpen] =
+    React.useState<boolean>(false);
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
+  const data = useAppSelector(selectSchedule);
 
   const actions = [
     {
@@ -69,7 +80,7 @@ const ListLessons = (props) => {
       icon: <LibraryAdd />,
       name: 'הוספה מרובה',
       action: () => {
-        setAddLessonOpen(true);
+        setAddBulkLessonOpen(true);
       }
     },
     {
@@ -110,144 +121,63 @@ const ListLessons = (props) => {
     });
   }, []);
 
-  const getGroups = async () => {
-    const groups = await getAllGroups();
-    const groupsAppointments: Appointment[] = groups.map((group) => {
-      const today = new Date();
+  // const customStore = new CustomStore({
+  //   load: (options) => {
+  //     return getLessonsAndGroups(options.filter[0][0]);
+  //   },
+  //   update: async (key, values) => {
+  //     try {
+  //       const updatedLesson = new Lesson(
+  //         key.id,
+  //         values.startDate,
+  //         values.isOpen,
+  //         { uid: values.tutorUid },
+  //         [],
+  //         values.subject,
+  //         { id: values.roomId },
+  //         values.maxStudents
+  //       );
 
-      let day = 0;
+  //       let available = true;
+  //       if (
+  //         (key.startDate as Date).getTime() !==
+  //         (values.startDate as Date).getTime()
+  //       ) {
+  //         available = await validateAvailability(updatedLesson);
+  //       } else if (key.tutorUid !== values.tutorUid) {
+  //         available = await validateTutorAvailability(updatedLesson);
+  //       } else if (key.roomId !== values.roomId) {
+  //         available = await validateRoomAvailability(updatedLesson);
+  //       }
 
-      if (today.getDay() === 7) {
-        day = today.getDate() + group.day;
-      } else if (group.day === 7) {
-        day = today.getDate() - today.getDay();
-      } else {
-        day = today.getDate() - (today.getDay() - group.day);
-      }
-      const [hour, minutes] = group.hour.split(':');
-      const startDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        day,
-        parseInt(hour),
-        parseInt(minutes)
-      );
-      const endDate = new Date(startDate);
-      endDate.setHours(endDate.getHours() + 1);
+  //       if (available) {
+  //         return updateLesson(updatedLesson);
+  //       }
+  //     } catch (e) {
+  //       console.error(e);
+  //     }
+  //   },
+  //   insert: async (values) => {
+  //     const lesson = new Lesson(
+  //       '',
+  //       values.startDate,
+  //       false,
+  //       { uid: values.tutorUid },
+  //       [],
+  //       values.subject,
+  //       { id: values.roomId },
+  //       values.maxStudents
+  //     );
+  //     const available = await validateAvailability(lesson);
 
-      const groupTeacher = tutors.find(
-        (tutor) => tutor.id === group.teacher?.uid
-      );
-
-      return {
-        text: group.name,
-        allDay: false,
-        startDate,
-        endDate,
-        recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
-        disabled: true,
-        tutorUid: group.teacher?.uid,
-        tutorName: groupTeacher?.text ?? 'לא נבחר',
-        type: 'group'
-      };
-    });
-
-    return groupsAppointments;
-  };
-
-  const getLessons = async (filters: [string, WhereFilterOp, Date][]) => {
-    const lessons = await loadLessonsBetween(filters);
-    const lessonsAppointment: Appointment[] = lessons.map((lesson) => {
-      const lessonTutor = tutors.find(
-        (tutor) => tutor.id === lesson.tutor?.uid
-      );
-
-      return {
-        id: lesson.id,
-        tutorName: `${lessonTutor?.text || 'לא נבחר'}`,
-        startDate: lesson.start,
-        endDate: lesson.end,
-        tutorUid: lesson.tutor?.uid,
-        roomId: lesson.room?.id,
-        subject: lesson.subject,
-        maxStudents: lesson.maxStudents,
-        isOpen: lesson.isOpen,
-        students: lesson.students,
-        type: 'lesson'
-      };
-    });
-
-    return lessonsAppointment;
-  };
-
-  const getLessonsAndGroups = async (
-    filters: [string, WhereFilterOp, Date][]
-  ) => {
-    if (!groups && tutors.length > 0) {
-      setGroups(await getGroups());
-    }
-    const lessons = await getLessons(filters);
-
-    return [...groups, ...lessons];
-  };
-
-  const customStore = new CustomStore({
-    load: (options) => {
-      return getLessonsAndGroups(options.filter[0][0]);
-    },
-    update: async (key, values) => {
-      try {
-        const updatedLesson = new Lesson(
-          key.id,
-          values.startDate,
-          values.isOpen,
-          { uid: values.tutorUid },
-          [],
-          values.subject,
-          { id: values.roomId },
-          values.maxStudents
-        );
-
-        let available = true;
-        if (
-          (key.startDate as Date).getTime() !==
-          (values.startDate as Date).getTime()
-        ) {
-          available = await validateAvailability(updatedLesson);
-        } else if (key.tutorUid !== values.tutorUid) {
-          available = await validateTutorAvailability(updatedLesson);
-        } else if (key.roomId !== values.roomId) {
-          available = await validateRoomAvailability(updatedLesson);
-        }
-
-        if (available) {
-          return updateLesson(updatedLesson);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    insert: async (values) => {
-      const lesson = new Lesson(
-        '',
-        values.startDate,
-        false,
-        { uid: values.tutorUid },
-        [],
-        values.subject,
-        { id: values.roomId },
-        values.maxStudents
-      );
-      const available = await validateAvailability(lesson);
-
-      if (available) {
-        return createNewLessonFromLessonObject(lesson);
-      }
-    },
-    remove: async (key) => {
-      await deleteLessonById(key.id);
-    }
-  });
+  //     if (available) {
+  //       return createNewLessonFromLessonObject(lesson);
+  //     }
+  //   },
+  //   remove: async (key) => {
+  //     await deleteLessonById(key.id);
+  //   }
+  // });
 
   const onAppointmentFormOpening = (e) => {
     const { form } = e;
@@ -371,29 +301,10 @@ const ListLessons = (props) => {
 
   const addBulkLessonsCallback = (addedLessons: Lesson[]) => {
     scheduler.current.instance.beginUpdate();
-
-    addedLessons
-      .map((lesson) => {
-        const lessonTutor = tutors.find(
-          (tutor) => tutor.id === lesson.tutor?.uid
-        );
-        return {
-          id: lesson.id,
-          tutorName: `${lessonTutor?.text || 'לא נבחר מתרגל'}`,
-          startDate: lesson.start,
-          endDate: lesson.end,
-          tutorUid: lesson.tutor.uid,
-          roomId: lesson.room.id,
-          subject: lesson.subject,
-          maxStudents: lesson.maxStudents,
-          isOpen: lesson.isOpen,
-          students: lesson.students
-        };
-      })
-      .forEach((lesson) => scheduler.current.instance.addAppointment(lesson));
+    dispatch(createBulkLessons(addedLessons));
 
     scheduler.current.instance.endUpdate();
-    setAddLessonOpen(false);
+    setAddBulkLessonOpen(false);
   };
 
   const openLessonsCallback = (updatedLessons: Lesson[]) => {
@@ -433,7 +344,7 @@ const ListLessons = (props) => {
     <Paper>
       <Scheduler
         ref={scheduler}
-        dataSource={customStore}
+        dataSource={data}
         startDayHour={10}
         endDayHour={21}
         defaultCurrentView="week"
@@ -444,6 +355,32 @@ const ListLessons = (props) => {
         crossScrollingEnabled={true}
         showCurrentTimeIndicator={false}
         remoteFiltering={true}
+        onCurrentDateChange={(currentDate: Date) => {
+          scheduler.current.instance.beginUpdate();
+          const curr = new Date(currentDate);
+          const first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
+          const last = first + 7; // last day is the first day + 6
+
+          const startOfWeek = new Date(curr.setDate(first));
+          const endOfWeek = new Date(curr.setDate(last));
+
+          console.log('start', startOfWeek);
+          console.log('min', minDate);
+
+          console.log('end', endOfWeek);
+          console.log('max', maxDate);
+
+          if (
+            startOfWeek.getTime() < minDate?.getTime() ||
+            endOfWeek.getTime() > maxDate?.getTime()
+          ) {
+            dispatch(
+              loadLessons({ startDate: startOfWeek, endDate: endOfWeek })
+            );
+          }
+
+          scheduler.current.instance.endUpdate();
+        }}
       >
         <Editing allowResizing={false} />
         <View name="יום" type="day" />
@@ -482,7 +419,10 @@ const ListLessons = (props) => {
         ))}
       </StyledSpeedDial>
 
-      <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
+      <Dialog
+        open={addBulkLessonOpen}
+        onClose={() => setAddBulkLessonOpen(false)}
+      >
         <DialogTitle>הוספה מרובה של תגבורים</DialogTitle>
         <DialogContent>
           <AddBulkLessons addBulkLessonsCallback={addBulkLessonsCallback} />
