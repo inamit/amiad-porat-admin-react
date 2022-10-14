@@ -35,7 +35,6 @@ const routes: RouteObject[] = [
     ]
   },
   {
-    path: '/dashboard',
     element: (
       <RequireAuth>
         <SidebarLayout />
@@ -43,53 +42,28 @@ const routes: RouteObject[] = [
     ),
     children: [
       {
-        path: '',
+        path: '/dashboard',
         element: <Dashboard />
-      }
-    ]
-  },
-  {
-    path: '/users',
-    element: (
-      <RequireAuth>
-        <SidebarLayout />
-      </RequireAuth>
-    ),
-    children: [
-      {
-        path: '',
-        element: <ListUsers />
       },
       {
-        path: 'add',
-        element: <AddUser />
-      }
-    ]
-  },
-  {
-    path: '/groups',
-    element: (
-      <RequireAuth>
-        <SidebarLayout />
-      </RequireAuth>
-    ),
-    children: [
+        path: '/users',
+        children: [
+          {
+            path: '',
+            element: <ListUsers />
+          },
+          {
+            path: 'add',
+            element: <AddUser />
+          }
+        ]
+      },
       {
-        path: '',
+        path: '/groups',
         element: <ListGroups />
-      }
-    ]
-  },
-  {
-    path: '/lessons',
-    element: (
-      <RequireAuth>
-        <SidebarLayout />
-      </RequireAuth>
-    ),
-    children: [
+      },
       {
-        path: '',
+        path: '/lessons',
         element: <ListLessons />
       }
     ]
