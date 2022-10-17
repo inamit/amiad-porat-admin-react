@@ -625,7 +625,18 @@ const ListUsers = () => {
             rows={rows}
             initialState={{
               columns: { columnVisibilityModel: { disabled: false } },
-              sorting: { sortModel: [{ field: 'disabled', sort: 'asc' }] }
+              sorting: { sortModel: [{ field: 'disabled', sort: 'asc' }] },
+              filter: {
+                filterModel: {
+                  items: [
+                    {
+                      columnField: 'role',
+                      operatorValue: 'is',
+                      value: UserRoles.STUDENT.value
+                    }
+                  ]
+                }
+              }
             }}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
