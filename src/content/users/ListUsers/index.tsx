@@ -11,13 +11,16 @@ import {
   GridRowModes,
   GridRowModesModel,
   MuiEvent,
-  GridEventListener
+  GridEventListener,
+  useGridApiContext
 } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import React from 'react';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import React, { useEffect } from 'react';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import { styled } from '@mui/material/styles';
@@ -172,29 +175,162 @@ const SubjectsMultiSelectComponent = (props) => {
   );
 };
 
+const MultiSelectComponnent = (props) => {
+  const { id, value, field, options } = props;
+  const apiRef = useGridApiContext();
+
+  const handleChange = (event) => {
+    const eventValue = event.target.value; // The new value entered by the user
+    console.log({ eventValue });
+    const newValue =
+      typeof eventValue === 'string' ? value.split(',') : eventValue;
+    apiRef.current.setEditCellValue({
+      id,
+      field,
+      value: newValue.filter((x) => x !== '')
+    });
+  };
+
+  return (
+    <Select
+      labelId="demo-multiple-name-label"
+      id="demo-multiple-name"
+      multiple
+      value={(typeof value === 'string' ? value.split(',') : value) ?? []}
+      onChange={handleChange}
+      sx={{ width: '100%' }}
+    >
+      {options.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </Select>
+  );
+};
+
+const CustomFilterInputMultipleSelect = (props) => {
+  const {
+    item,
+    applyValue,
+    type,
+    apiRef,
+    focusElementRef,
+    options,
+    ...others
+  } = props;
+
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const MenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250
+      }
+    }
+  };
+
+  return (
+    <div>
+      <FormControl variant="standard" sx={{ width: 130 }}>
+        <InputLabel shrink={true} id="demo-multiple-chip-label">
+          ערך
+        </InputLabel>
+        <Select
+          labelId="demo-multiple-chip-label"
+          id="demo-multiple-chip"
+          multiple
+          value={
+            (typeof item.value === 'string'
+              ? item.value.split(',')
+              : item.value) ?? []
+          }
+          onChange={(event) =>
+            applyValue({ ...item, value: event.target.value })
+          }
+          renderValue={(selected) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map((value) => {
+                const selectedOptions = options.find(
+                  (option) => option.value === value
+                );
+                return (
+                  <Chip
+                    key={selectedOptions.value}
+                    label={selectedOptions.label}
+                  />
+                );
+              })}
+            </Box>
+          )}
+          MenuProps={MenuProps}
+        >
+          {options.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </div>
+  );
+};
+
+const CustomGroupsFilterInput = (params) => {
+  const groups = selectGroups(store.getState());
+
+  return (
+    <CustomFilterInputMultipleSelect
+      {...params}
+      options={groups.map((group) => ({ value: group.id, label: group.name }))}
+    />
+  );
+};
+
+const CustomGroupsEditCell = (params) => {
+  const groups = selectGroups(store.getState());
+
+  return (
+    <MultiSelectComponnent
+      {...params}
+      options={
+        (params.row?.role as unknown as number) === UserRoles.STUDENT.value
+          ? groups.map((group) => ({ value: group.id, label: group.name }))
+          : []
+      }
+    />
+  );
+};
 const ListUsers = () => {
   const dispatch = useAppDispatch();
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
+  const [rows, setRows] = React.useState<User[]>([]);
 
   const subjects = useAppSelector(selectSubjects).values;
   const grades = useAppSelector(selectGrades).values;
-  const users = selectUsers(store.getState());
+  const users = useAppSelector(selectUsers);
   const loadStatus = useAppSelector(selectUsersLoadStatus);
-  const groups = selectGroups(store.getState());
+  const groups = useAppSelector(selectGroups);
 
+  useEffect(() => {
+    setRows(users);
+  }, [users]);
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
     'children' | 'severity'
   > | null>(null);
   const handleCloseSnackbar = () => setSnackbar(null);
 
-  const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const user = dispatch(updateUser({ id: newRow.uid, changes: newRow }));
-    setSnackbar({ children: 'המשתמש התעדכן בהצלחה', severity: 'success' });
-    return user;
-  }, []);
+  const processRowUpdate = React.useCallback(
+    async (newRow: GridRowModel, oldRow: GridRowModel) => {
+      dispatch(updateUser({ id: newRow.uid, changes: newRow }));
+      return oldRow;
+    },
+    []
+  );
 
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
     setSnackbar({ children: error.message, severity: 'error' });
@@ -237,15 +373,50 @@ const ListUsers = () => {
     []
   );
 
+  const disableUser = React.useCallback(
+    (id: GridRowId) => () => {
+      //TODO: implement disable user
+      alert('הפונקציה הזאת תתאפשר בקרוב!');
+    },
+    []
+  );
+  const enableUser = React.useCallback(
+    (id: GridRowId) => () => {
+      //TODO: implement enable user
+      alert('הפונקציה הזאת תתאפשר בקרוב!');
+    },
+    []
+  );
+
   const subjectsFilter: GridFilterOperator[] = [
     {
-      label: 'מכיל',
-      value: 'contains',
+      label: 'מכיל אחד מ',
+      value: 'containsAny',
       getApplyFilterFn: (filterItem: GridFilterItem) => {
         if (
           !filterItem.columnField ||
           !filterItem.value ||
-          !filterItem.operatorValue
+          !filterItem.operatorValue ||
+          filterItem.value.length === 0
+        ) {
+          return null;
+        }
+
+        return (params): boolean => {
+          return filterItem.value.some((item) => params.value?.includes(item));
+        };
+      },
+      InputComponent: CustomGroupsFilterInput
+    },
+    {
+      label: 'מכיל את כל',
+      value: 'containsAll',
+      getApplyFilterFn: (filterItem: GridFilterItem) => {
+        if (
+          !filterItem.columnField ||
+          !filterItem.value ||
+          !filterItem.operatorValue ||
+          filterItem.value.length === 0
         ) {
           return null;
         }
@@ -254,7 +425,7 @@ const ListUsers = () => {
           return filterItem.value.every((item) => params.value?.includes(item));
         };
       },
-      InputComponent: SubjectsMultiSelectComponent
+      InputComponent: CustomGroupsFilterInput
     }
   ];
 
@@ -307,17 +478,20 @@ const ListUsers = () => {
         renderCell: (params) => getEnumByValue(grades, params.row.grade)?.label,
         type: 'singleSelect',
         valueOptions: (params) => {
-          return (params.row.role as unknown as number) ===
-            UserRoles.STUDENT.value
-            ? grades
-            : [];
+          return params.row?.role
+            ? (params.row?.role as unknown as number) ===
+              UserRoles.STUDENT.value
+              ? grades
+              : []
+            : grades;
         }
       },
       {
         field: 'group',
         headerName: 'שיעור',
         editable: true,
-        width: 150,
+        width: 250,
+        renderEditCell: CustomGroupsEditCell,
         renderCell: (params) => {
           const groups = selectGroups(store.getState());
           return params.row.group?.map((group) => {
@@ -326,6 +500,7 @@ const ListUsers = () => {
             );
             return (
               <Tooltip
+                key={group}
                 title={`מורה: ${groupInfo?.teacher?.firstName} ${groupInfo?.teacher?.lastName}`}
               >
                 <Chip key={group} label={groupInfo?.name} />
@@ -334,37 +509,6 @@ const ListUsers = () => {
           });
         },
         type: 'singleSelect',
-        valueGetter: (params) =>
-          params.row.group?.value ?? params.row.group?.id ?? '',
-        valueOptions: (params) =>
-          (params.row.role as unknown as number) === UserRoles.STUDENT.value
-            ? groups.map((group) => ({ label: group.name, value: group.id }))
-            : [],
-        valueSetter: (params) => {
-          return {
-            ...params.row,
-            group: groups.find((group) => group.id === params.value)
-          };
-        }
-      },
-      {
-        field: 'subjects',
-        headerName: 'מקצועות',
-        editable: false,
-        width: 200,
-        renderCell: (params) => {
-          return params.row.subjects?.map((subject) => {
-            const enumValue = getEnumByValue(subjects, subject);
-            if (enumValue) {
-              return <Chip key={enumValue.label} label={enumValue.label} />;
-            }
-          });
-        },
-        type: 'singleSelect',
-        valueOptions: (params) =>
-          (params.row.role as unknown as number) === UserRoles.STUDENT.value
-            ? subjects
-            : [],
         filterOperators: subjectsFilter
       },
       {
@@ -380,6 +524,11 @@ const ListUsers = () => {
         valueOptions: () => {
           return Object.values(UserRoles);
         }
+      },
+      {
+        field: 'disabled',
+        headerName: 'מוקפא?',
+        type: 'boolean'
       },
       {
         field: 'actions',
@@ -408,16 +557,33 @@ const ListUsers = () => {
           return [
             <GridActionsCellItem
               icon={<EditIcon />}
-              label="Edit"
+              label="עריכה"
+              title="עריכה"
               className="textPrimary"
               onClick={handleEditClick(id)}
               color="inherit"
             />,
+            users.find((user) => user.uid === id).disabled ? (
+              <GridActionsCellItem
+                label="ביטול הקפאה"
+                icon={<LockOpenIcon />}
+                onClick={enableUser(id)}
+                showInMenu
+              />
+            ) : (
+              <GridActionsCellItem
+                label="הקפאה"
+                icon={<LockIcon />}
+                onClick={disableUser(id)}
+                showInMenu
+              />
+            ),
             <GridActionsCellItem
               icon={<DeleteIcon />}
-              label="Delete"
+              label="מחיקה"
               onClick={deleteUser(id)}
               color="inherit"
+              showInMenu
             />
           ];
         }
@@ -456,7 +622,11 @@ const ListUsers = () => {
               }
             }}
             autoHeight={true}
-            rows={users}
+            rows={rows}
+            initialState={{
+              columns: { columnVisibilityModel: { disabled: false } },
+              sorting: { sortModel: [{ field: 'disabled', sort: 'asc' }] }
+            }}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.uid}
@@ -468,6 +638,9 @@ const ListUsers = () => {
             onRowEditStart={handleRowEditStart}
             onRowEditStop={handleRowEditStop}
             loading={loadStatus === LoadStatus.LOADING}
+            onCellDoubleClick={(params) => {
+              // TODO: Open user info
+            }}
           />
         </CardContent>
       </Card>

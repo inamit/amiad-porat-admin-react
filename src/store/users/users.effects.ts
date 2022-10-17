@@ -18,7 +18,8 @@ usersMiddleware.startListening({
       addUser({
         ...action.payload,
         uid: createdUser.data['uid'],
-        role: action.payload.role as unknown as EnumValue<number>
+        role: action.payload.role as unknown as EnumValue<number>,
+        disabled: false
       })
     );
     Swal.fire({ title: 'המשתמש נוסף', icon: 'success' });
@@ -28,7 +29,16 @@ usersMiddleware.startListening({
 usersMiddleware.startListening({
   actionCreator: updateUser,
   effect: async (action) => {
-    dbUpdateUser(action.payload.id.toString(), action.payload.changes);
+    try {
+      await dbUpdateUser(action.payload.id.toString(), action.payload.changes);
+      Swal.fire({ icon: 'success', title: 'עדכון המשתמש התבצע בהצלחה' });
+    } catch (e) {
+      Swal.fire({
+        icon: 'error',
+        title: 'התרחשה שגיאה בעדכון המשתמש',
+        text: e
+      });
+    }
   }
 });
 

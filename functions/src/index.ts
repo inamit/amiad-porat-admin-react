@@ -106,28 +106,38 @@ export const getAllUsers = functions.https.onCall(async (data, context) => {
     const { users } = await admin.auth().listUsers();
 
     return await Promise.all(
-      users.map(async ({ uid, email, metadata, customClaims, phoneNumber }) => {
-        try {
-          const userInfo: DocumentSnapshot = await admin
-            .firestore()
-            .collection('users')
-            .doc(uid)
-            .get();
+      users.map(
+        async ({
+          uid,
+          email,
+          metadata,
+          customClaims,
+          phoneNumber,
+          disabled
+        }) => {
+          try {
+            const userInfo: DocumentSnapshot = await admin
+              .firestore()
+              .collection('users')
+              .doc(uid)
+              .get();
 
-          const response: any = {
-            ...userInfo.data(),
-            uid,
-            email,
-            metadata,
-            customClaims,
-            phoneNumber
-          };
+            const response: any = {
+              ...userInfo.data(),
+              uid,
+              email,
+              metadata,
+              customClaims,
+              phoneNumber,
+              disabled
+            };
 
-          return response;
-        } catch (e) {
-          functions.logger.error(e);
+            return response;
+          } catch (e) {
+            functions.logger.error(e);
+          }
         }
-      })
+      )
     );
   } catch (e) {
     functions.logger.error(e);
