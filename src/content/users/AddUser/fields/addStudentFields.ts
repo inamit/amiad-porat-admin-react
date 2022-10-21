@@ -1,13 +1,13 @@
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
-import { getGroupsForSelect } from 'dal/groups.dal';
 import { FieldType } from '../../../../models/enums/fieldTypes';
 import { UserRoles } from '../../../../models/enums/userRoles';
 import { FormFieldType } from '../../../../models/fieldsConfigs';
 import { isNumberRequired } from 'validations/numberValidations';
-import { isRequired } from 'validations/stringValidations';
 import { isArrayRequired } from 'validations/arrayValidations';
 import { selectGrades, selectSubjects } from 'store/config/config.slice';
+import { selectGroups } from 'store/groups/groups.slice';
+import Group from 'models/group';
 
 export const addStudentFields: FormFieldType[] = [
   {
@@ -54,9 +54,10 @@ export const addStudentFields: FormFieldType[] = [
     ],
     objectLocation: 'group',
     placeholder: 'שיעור',
-    type: FieldType.ASYNC_SELECT,
+    type: FieldType.STORE_SELECT,
     icon: SchoolOutlinedIcon,
-    asyncChildren: getGroupsForSelect,
+    select: selectGroups,
+    map: (group: Group) => ({ value: group.id, label: group.name }),
     required: true,
     multiple: true,
     validationFunction: isArrayRequired
