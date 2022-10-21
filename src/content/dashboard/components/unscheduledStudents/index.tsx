@@ -8,23 +8,28 @@ import {
   Skeleton,
   Typography
 } from '@mui/material';
-import { getScheduledStudentsUidBetween } from 'dal/lessons.dal';
-import { getUsersWithRole } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import React, { useEffect } from 'react';
 import { getString } from 'firebase/remote-config';
 import { remoteConfig } from 'firebaseConfig';
+import { useAppSelector } from 'store/store';
+import { selectUsers } from 'store/users/users.slice';
+import { selectLessons } from 'store/lessons/lessons.slice';
+import StudentStatus from 'models/enums/studentStatus';
 
 const UnscheduledStudents = (props) => {
   const [loading, setLoading] = React.useState<boolean>(true);
+  const allUsers = useAppSelector(selectUsers);
+  const allLessons = useAppSelector(selectLessons);
+
   const [students, setStudents] = React.useState<User[]>([]);
   const endDate = new Date();
   endDate.setDate(endDate.getDate() + 7);
 
   useEffect(() => {
     loadStudents();
-  }, []);
+  }, [allLessons, allUsers]);
 
   const whatsappMessageDefault = getString(
     remoteConfig,
@@ -34,13 +39,22 @@ const UnscheduledStudents = (props) => {
   const loadStudents = async () => {
     setLoading(true);
 
-    const scheduledStudents = await getScheduledStudentsUidBetween(
-      new Date(),
-      endDate
-    );
+    const scheduledStudents = allLessons
+      .filter((lesson) => lesson.start >= new Date() && lesson.end <= endDate)
+      .map((lesson) =>
+        lesson.students
+          .filter((value) => value.status === StudentStatus.Scheduled)
+          .map((student) => student.student?.uid)
+      )
+      .reduce((acc, uidArr) => [...acc, ...uidArr], []);
 
     try {
-      const allStudents = await getUsersWithRole(UserRoles.STUDENT);
+      const allStudents = allUsers.filter(
+        (user) =>
+          (user.role as unknown as number) === UserRoles.STUDENT.value &&
+          !user.disabled
+      );
+
       setStudents(
         allStudents.filter(
           (student) => !scheduledStudents.includes(student.uid)
