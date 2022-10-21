@@ -32,7 +32,6 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 export const selectSchedule = createSelector(
   [selectGroups, selectLessons],
   (groups, lessons) => {
-    console.log('selecting scheduler');
     const mappedGroups = groups.map((group) => {
       const today = new Date();
 
