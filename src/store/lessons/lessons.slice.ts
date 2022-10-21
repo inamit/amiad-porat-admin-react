@@ -40,9 +40,6 @@ const lessonsSlice = createSlice({
       );
     },
     addLessons: (state, action: PayloadAction<Lesson[]>) => {
-      console.log('add lessons');
-      console.log(action.payload);
-
       state.entitiesState = lessonsAdapter.addMany(
         state.entitiesState,
         action.payload
