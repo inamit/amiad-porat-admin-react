@@ -2,8 +2,7 @@ import {
   createAction,
   createAsyncThunk,
   createSlice,
-  PayloadAction,
-  Update
+  PayloadAction
 } from '@reduxjs/toolkit';
 import { AddGroupModel } from 'content/groups/AddGroup/addGroupModel';
 import { getAllGroups } from 'dal/groups.dal';
@@ -11,11 +10,17 @@ import Group from 'models/group';
 import { LoadStatus } from 'store/loadStatus';
 import { RootState } from 'store/store';
 import { groupsAdapter, initialState } from './groups.model';
+import { updateGroup as dbUpdateGroup } from 'dal/groups.dal';
 
 export const loadGroups = createAsyncThunk('groups/load', () => getAllGroups());
 
 export const createNewGroup = createAction<AddGroupModel>(
   'groups/createNewGroup'
+);
+
+export const updateGroup = createAsyncThunk(
+  'groups/update',
+  (group: Group, thunkApi) => dbUpdateGroup(group.id, group)
 );
 
 const groupsSlice = createSlice({
@@ -30,12 +35,6 @@ const groupsSlice = createSlice({
     },
     addGroups: (state, action: PayloadAction<Group[]>) => {
       state.entitiesState = groupsAdapter.addMany(
-        state.entitiesState,
-        action.payload
-      );
-    },
-    updateGroup: (state, action: PayloadAction<Update<Group>>) => {
-      state.entitiesState = groupsAdapter.updateOne(
         state.entitiesState,
         action.payload
       );
@@ -63,11 +62,17 @@ const groupsSlice = createSlice({
       .addCase(loadGroups.rejected, (state) => {
         state.status = LoadStatus.FAILED;
       });
+
+    builder.addCase(updateGroup.fulfilled, (state, action) => {
+      state.entitiesState = groupsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
   }
 });
 
-export const { addGroup, addGroups, updateGroup, removeGroup } =
-  groupsSlice.actions;
+export const { addGroup, addGroups, removeGroup } = groupsSlice.actions;
 export const selectGroups = groupsAdapter.getSelectors(
   (state: RootState) => state.groups.entitiesState
 ).selectAll;

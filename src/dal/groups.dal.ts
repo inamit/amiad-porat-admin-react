@@ -9,7 +9,7 @@ import {
   where,
   documentId,
   getDoc,
-  updateDoc
+  setDoc
 } from 'firebase/firestore';
 import { db } from 'firebaseConfig';
 import { EnumValue } from 'models/enums/enum';
@@ -59,13 +59,13 @@ export const teacherHasGroupByDateTime = async (
   return !docs.empty;
 };
 
-export const updateGroup = async (id: string, updatedGroup: Partial<Group>) => {
+export const updateGroup = async (id: string, updatedGroup: Group) => {
   const groupRef = doc(db, groupsCollectionName, id).withConverter(
     groupConverter
   );
 
-  await updateDoc(groupRef, updatedGroup);
-  return updatedGroup;
+  await setDoc(groupRef, updatedGroup);
+  return { id, changes: updatedGroup };
 };
 
 export const saveNewGroup = async (group: AddGroupModel): Promise<Group> => {

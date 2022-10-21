@@ -13,7 +13,6 @@ import {
 } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
 import React, { useEffect } from 'react';
-import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import AddGroup from '../AddGroup';
@@ -29,7 +28,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
-import { store, useAppDispatch, useAppSelector } from 'store/store';
+import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
 import { getHourStringFromDate } from 'utils/dateUtils';
@@ -41,6 +40,7 @@ import {
   updateGroup
 } from 'store/groups/groups.slice';
 import { LoadStatus } from 'store/loadStatus';
+import { selectUsers } from 'store/users/users.slice';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -137,8 +137,9 @@ const ListGroups = () => {
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
   const subjects = useAppSelector(selectSubjects).values;
-  const groups = selectGroups(store.getState());
+  const groups = useAppSelector(selectGroups);
   const loadingStatus = useAppSelector(selectGroupsLoadStatus);
+  const users = useAppSelector(selectUsers);
 
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
@@ -146,27 +147,38 @@ const ListGroups = () => {
   > | null>(null);
   const handleCloseSnackbar = () => setSnackbar(null);
 
-  const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const group = dispatch(updateGroup({ id: newRow.id, changes: newRow }));
-    setSnackbar({ children: 'השיעור התעדכן בהצלחה', severity: 'success' });
-    return group;
-  }, []);
+  const processRowUpdate = React.useCallback(
+    async (newRow: GridRowModel, oldRow: GridRowModel) => {
+      try {
+        await dispatch(updateGroup(newRow as Group)).unwrap();
+        setSnackbar({
+          severity: 'success',
+          children: 'עדכון הקבוצה התבצע בהצלחה'
+        });
+        return newRow;
+      } catch (e) {
+        setSnackbar({
+          severity: 'error',
+          children: 'התרחשה שגיאה בעדכון הקבוצה'
+        });
+        return oldRow;
+      }
+    },
+    []
+  );
 
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
     setSnackbar({ children: error.message, severity: 'error' });
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    setTeachers(
+      users.filter(
+        (user) => (user.role as unknown as number) === UserRoles.STUDENT.value
+      )
+    );
+  }, [users]);
 
-  const loadData = async () => {
-    try {
-      const users = await getUsersWithRoleBiggerThan(UserRoles.TEACHER);
-      setTeachers(users);
-    } finally {
-    }
-  };
   const deleteGroup = React.useCallback(
     (id: GridRowId) => () => {
       // TODO: implement delete group
