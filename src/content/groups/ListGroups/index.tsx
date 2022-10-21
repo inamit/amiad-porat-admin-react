@@ -174,7 +174,7 @@ const ListGroups = () => {
   useEffect(() => {
     setTeachers(
       users.filter(
-        (user) => (user.role as unknown as number) === UserRoles.STUDENT.value
+        (user) => (user.role as unknown as number) >= UserRoles.TEACHER.value
       )
     );
   }, [users]);
@@ -186,6 +186,28 @@ const ListGroups = () => {
     },
     []
   );
+
+  const checkTeacherAvailability = async (params, teacherId, day, hour) => {
+    const isTeacherBusy = await teacherHasGroupByDateTime(
+      teacherId,
+      day,
+      hour,
+      [params.id.toString()]
+    );
+    const teacherBusyErrorMessage =
+      'ביום והשעה של השיעור הזה, יש למורה שיעור אחר';
+
+    if (isTeacherBusy) {
+      setSnackbar({
+        children: teacherBusyErrorMessage,
+        severity: 'error'
+      });
+    }
+    return {
+      ...params.props,
+      error: isTeacherBusy
+    };
+  };
 
   const columns = React.useMemo<GridColumns<GridRowsProp<Group>[number]>>(
     () => [
@@ -212,27 +234,13 @@ const ListGroups = () => {
             label: `${teacher.firstName} ${teacher.lastName}`
           }));
         },
-        preProcessEditCellProps: async (params) => {
-          const isTeacherBusy = await teacherHasGroupByDateTime(
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
             params.props.value,
             params.row.day,
-            params.row.hour,
-            [params.id.toString()]
-          );
-          const teacherBusyErrorMessage =
-            'ביום והשעה של השיעור הזה, יש למורה שיעור אחר';
-
-          if (isTeacherBusy) {
-            setSnackbar({
-              children: teacherBusyErrorMessage,
-              severity: 'error'
-            });
-          }
-          return {
-            ...params.props,
-            error: isTeacherBusy
-          };
-        },
+            params.row.hour
+          ),
         valueSetter: (params) => {
           return {
             ...params.row,
@@ -260,7 +268,14 @@ const ListGroups = () => {
         valueGetter: (params) => params.row.day,
         type: 'singleSelect',
         editable: true,
-        valueOptions: () => Object.values(DaysOfWeek)
+        valueOptions: () => Object.values(DaysOfWeek),
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
+            params.row.teacher.uid,
+            params.props.value,
+            params.row.hour
+          )
       },
       {
         field: 'hour',
@@ -282,7 +297,14 @@ const ListGroups = () => {
             ...params.row,
             hour: getHourStringFromDate(params.value)
           };
-        }
+        },
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
+            params.row.teacher.uid,
+            params.row.day,
+            getHourStringFromDate(params.props.value)
+          )
       },
       {
         field: 'actions',
