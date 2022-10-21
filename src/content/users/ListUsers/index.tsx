@@ -123,7 +123,7 @@ const NoDataText = () => {
 
 const SubjectsMultiSelectComponent = (props) => {
   const { item, applyValue } = props;
-  const subjects = useAppSelector(selectSubjects).values;
+  const subjects = useAppSelector(selectSubjects);
 
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
@@ -309,8 +309,8 @@ const ListUsers = () => {
   );
   const [rows, setRows] = React.useState<User[]>([]);
 
-  const subjects = useAppSelector(selectSubjects).values;
-  const grades = useAppSelector(selectGrades).values;
+  const subjects = useAppSelector(selectSubjects);
+  const grades = useAppSelector(selectGrades);
   const users = useAppSelector(selectUsers);
   const loadStatus = useAppSelector(selectUsersLoadStatus);
   const groups = useAppSelector(selectGroups);

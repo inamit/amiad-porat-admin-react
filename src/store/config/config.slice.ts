@@ -49,8 +49,9 @@ const addCases = (
     });
 };
 
-export const selectGrades = (state: RootState) => state.config.grades;
-export const selectSubjects = (state: RootState) => state.config.subjects;
-export const selectRooms = (state: RootState) => state.config.rooms;
+export const selectGrades = (state: RootState) => state.config.grades.values;
+export const selectSubjects = (state: RootState) =>
+  state.config.subjects.values;
+export const selectRooms = (state: RootState) => state.config.rooms.values;
 
 export default configSlice.reducer;

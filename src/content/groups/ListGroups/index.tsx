@@ -136,7 +136,7 @@ const ListGroups = () => {
   const dispatch = useAppDispatch();
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
-  const subjects = useAppSelector(selectSubjects).values;
+  const subjects = useAppSelector(selectSubjects);
   const groups = useAppSelector(selectGroups);
   const loadingStatus = useAppSelector(selectGroupsLoadStatus);
   const users = useAppSelector(selectUsers);

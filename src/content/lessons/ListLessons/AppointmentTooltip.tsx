@@ -20,7 +20,7 @@ import { MutableRefObject } from 'react';
 import { Scheduler } from 'devextreme-react';
 
 const AppointmentTooltip = (props) => {
-  const subjects = useAppSelector(selectSubjects).values.map((subject) => ({
+  const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
     color: subject.color.open
@@ -28,7 +28,7 @@ const AppointmentTooltip = (props) => {
 
   const data = props.data.targetedAppointmentData;
 
-  const rooms = useAppSelector(selectRooms).values.map((room) => ({
+  const rooms = useAppSelector(selectRooms).map((room) => ({
     id: room.value,
     text: room.label
   }));
