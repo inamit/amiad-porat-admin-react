@@ -185,10 +185,10 @@ const FormField = <T,>({
     default:
       fieldToShow = (
         <TextFieldIcon
-          startIcon={<FieldIcon />}
-          placeholder={field.placeholder}
+          {...field}
+          startIcon={field.icon ? <FieldIcon /> : undefined}
           key={field.objectLocation}
-          type={field.type}
+          value={formValues[field.objectLocation]}
           onChange={({ target }) => {
             const newValues = { ...formValues };
             newValues[field.objectLocation] = target.value;

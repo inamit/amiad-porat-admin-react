@@ -2,7 +2,6 @@ import { FieldType } from './enums/fieldTypes';
 import Joi from 'joi';
 import { RadioGroupDirection } from './enums/radioGroupDirection';
 import { RootState } from 'store/store';
-import { ConfigValues } from 'store/config/config.model';
 
 type Operator = '===' | '>' | '<' | '<=' | '>=';
 
@@ -17,6 +16,8 @@ export interface FormField {
   icon?: any;
   objectLocation: string;
   type?: FieldType;
+  min?: number;
+  max?: number;
   required: boolean;
   showConditions?: Condition[];
   validationFunction?: (value: any, fieldName: string) => Joi.ValidationResult;

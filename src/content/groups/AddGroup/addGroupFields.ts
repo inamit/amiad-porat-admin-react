@@ -3,7 +3,6 @@ import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRen
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { isRequired } from 'validations/stringValidations';
 import { FieldType } from 'models/enums/fieldTypes';
-import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import { RadioGroupDirection } from 'models/enums/radioGroupDirection';
 import { isNumberRequired } from 'validations/numberValidations';

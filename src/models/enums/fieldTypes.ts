@@ -1,6 +1,7 @@
 export enum FieldType {
   DATE_PICKER = 'datePicker',
   PASSWORD = 'password',
+  NUMBER = 'number',
   SELECT = 'select',
   ASYNC_SELECT = 'async_select',
   STORE_SELECT = 'store_select',
