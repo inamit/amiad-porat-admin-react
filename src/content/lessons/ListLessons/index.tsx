@@ -12,7 +12,6 @@ import {
   SpeedDialAction,
   SpeedDialIcon
 } from '@mui/material';
-import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import Lesson from 'models/lesson';
 import Scheduler, {
@@ -21,23 +20,14 @@ import Scheduler, {
   Scrolling,
   View
 } from 'devextreme-react/scheduler';
-import { Appointment } from 'devextreme/ui/scheduler';
-import CustomStore from 'devextreme/data/custom_store';
-import {
-  createNewLessonFromLessonObject,
-  deleteLessonById,
-  isRoomAvailable,
-  isTutorAvailable,
-  loadLessonsBetween,
-  updateLesson
-} from 'dal/lessons.dal';
+import { AppointmentFormOpeningEvent } from 'devextreme/ui/scheduler';
+import { isRoomAvailable, isTutorAvailable } from 'dal/lessons.dal';
 import AppointmentView from './AppointmentView';
 import withReactContent from 'sweetalert2-react-content';
 import Swal from 'sweetalert2';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
 import AppointmentTooltip from './AppointmentTooltip';
-import { WhereFilterOp } from 'firebase/firestore';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import OpenLessons from '../OpenLessons';
 import {
@@ -46,6 +36,8 @@ import {
   selectMaxLessonsDate,
   selectMinLessonsDate
 } from 'store/lessons/lessons.slice';
+import AddLesson from '../AddLesson';
+import { selectUsers } from 'store/users/users.slice';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute',
@@ -63,6 +55,12 @@ const ListLessons = (props) => {
   const minDate = useAppSelector(selectMinLessonsDate);
   const maxDate = useAppSelector(selectMaxLessonsDate);
 
+  const [addLessonProps, setAddLessonProps] = React.useState<{
+    date?: string | Date;
+    tutorUid?: string;
+    roomId?: string;
+  }>({ date: new Date() });
+  const [addLessonOpen, setAddLessonOpen] = React.useState<boolean>(false);
   const [addBulkLessonOpen, setAddBulkLessonOpen] =
     React.useState<boolean>(false);
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
@@ -73,7 +71,8 @@ const ListLessons = (props) => {
       icon: <AddBox />,
       name: 'הוספה בודדת',
       action: () => {
-        scheduler.current.instance.showAppointmentPopup({}, true);
+        setAddLessonProps({});
+        setAddLessonOpen(true);
       }
     },
     {
@@ -92,9 +91,14 @@ const ListLessons = (props) => {
     }
   ];
 
-  const [tutors, setTutors] = React.useState<{ id: string; text: string }[]>(
-    []
-  );
+  const tutors = useAppSelector(selectUsers)
+    .filter((user) => (user.role as unknown) >= UserRoles.TUTOR.value)
+    .map((user) => {
+      return {
+        id: user.uid,
+        text: `${user.firstName} ${user.lastName}`
+      };
+    });
   const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
@@ -106,150 +110,22 @@ const ListLessons = (props) => {
   }));
 
   useEffect(() => {
-    rooms.push({ id: '', text: 'לא נבחר' });
+    if (rooms.filter((room) => room.id === '').length === 0) {
+      rooms.push({ id: '', text: 'לא נבחר' });
+    }
   }, [rooms]);
   useEffect(() => {
-    getUsersWithRoleBiggerThan(UserRoles.TUTOR).then((users) => {
-      const parsedUsers = users.map((user) => {
-        return {
-          id: user.uid,
-          text: `${user.firstName} ${user.lastName}`
-        };
-      });
-      parsedUsers.push({ id: '', text: 'לא נבחר' });
-      setTutors(parsedUsers);
-    });
-  }, []);
+    if (tutors.filter((tutor) => tutor.id === '').length === 0) {
+      tutors.push({ id: '', text: 'לא נבחר' });
+    }
+    console.log('tutors changed', tutors);
+  }, [tutors]);
 
-  // const customStore = new CustomStore({
-  //   load: (options) => {
-  //     return getLessonsAndGroups(options.filter[0][0]);
-  //   },
-  //   update: async (key, values) => {
-  //     try {
-  //       const updatedLesson = new Lesson(
-  //         key.id,
-  //         values.startDate,
-  //         values.isOpen,
-  //         { uid: values.tutorUid },
-  //         [],
-  //         values.subject,
-  //         { id: values.roomId },
-  //         values.maxStudents
-  //       );
-
-  //       let available = true;
-  //       if (
-  //         (key.startDate as Date).getTime() !==
-  //         (values.startDate as Date).getTime()
-  //       ) {
-  //         available = await validateAvailability(updatedLesson);
-  //       } else if (key.tutorUid !== values.tutorUid) {
-  //         available = await validateTutorAvailability(updatedLesson);
-  //       } else if (key.roomId !== values.roomId) {
-  //         available = await validateRoomAvailability(updatedLesson);
-  //       }
-
-  //       if (available) {
-  //         return updateLesson(updatedLesson);
-  //       }
-  //     } catch (e) {
-  //       console.error(e);
-  //     }
-  //   },
-  //   insert: async (values) => {
-  //     const lesson = new Lesson(
-  //       '',
-  //       values.startDate,
-  //       false,
-  //       { uid: values.tutorUid },
-  //       [],
-  //       values.subject,
-  //       { id: values.roomId },
-  //       values.maxStudents
-  //     );
-  //     const available = await validateAvailability(lesson);
-
-  //     if (available) {
-  //       return createNewLessonFromLessonObject(lesson);
-  //     }
-  //   },
-  //   remove: async (key) => {
-  //     await deleteLessonById(key.id);
-  //   }
-  // });
-
-  const onAppointmentFormOpening = (e) => {
-    const { form } = e;
-    let { startDate } = e.appointmentData;
-
-    form.option('items', [
-      {
-        label: {
-          text: 'מתרגל'
-        },
-        editorType: 'dxSelectBox',
-        dataField: 'tutorUid',
-        editorOptions: {
-          items: tutors,
-          displayExpr: 'text',
-          valueExpr: 'id'
-        }
-      },
-      {
-        label: {
-          text: 'חדר'
-        },
-        editorType: 'dxSelectBox',
-        dataField: 'roomId',
-        editorOptions: {
-          items: rooms,
-          displayExpr: 'text',
-          valueExpr: 'id'
-        }
-      },
-      {
-        label: {
-          text: 'מקצוע'
-        },
-        dataField: 'subject',
-        editorType: 'dxRadioGroup',
-        editorOptions: {
-          items: subjects,
-          displayExpr: 'text',
-          valueExpr: 'id'
-        }
-      },
-      {
-        label: {
-          text: 'מספר מקסימלי של תלמידים'
-        },
-        dataField: 'maxStudents',
-        editorType: 'dxTextBox',
-        editorOptions: {
-          value: 5,
-          mode: 'number'
-        }
-      },
-      {
-        label: {
-          text: 'התחלה'
-        },
-        dataField: 'startDate',
-        editorType: 'dxDateBox',
-        editorOptions: {
-          width: '100%',
-          type: 'datetime',
-          onValueChanged(args) {
-            startDate = args.value;
-            form.updateData(
-              'endDate',
-              new Date(startDate.getTime() + 60 * 60 * 1000)
-            );
-          }
-        }
-      }
-    ]);
+  const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
+    let { startDate, tutorUid, roomId } = e.appointmentData;
+    e.cancel = true;
+    setAddLessonProps({ date: startDate, tutorUid, roomId });
+    setAddLessonOpen(true);
   };
 
   const validateTutorAvailability = async (lesson: Lesson) => {
@@ -418,6 +294,13 @@ const ListLessons = (props) => {
           />
         ))}
       </StyledSpeedDial>
+
+      <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
+        <DialogTitle>תגבור חדש</DialogTitle>
+        <DialogContent>
+          <AddLesson {...addLessonProps} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={addBulkLessonOpen}
