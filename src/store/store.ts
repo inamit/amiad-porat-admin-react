@@ -6,7 +6,7 @@ import { groupsReducer, selectGroups } from './groups/groups.slice';
 import { lessonsMiddleware } from './lessons/lessons.effects';
 import { lessonsReducer, selectLessons } from './lessons/lessons.slice';
 import { usersMiddleware } from './users/users.effects';
-import { usersReducer } from './users/users.slice';
+import { selectUsers, usersReducer } from './users/users.slice';
 
 export const store = configureStore({
   reducer: {
@@ -30,8 +30,8 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 export const selectSchedule = createSelector(
-  [selectGroups, selectLessons],
-  (groups, lessons) => {
+  [selectGroups, selectLessons, selectUsers],
+  (groups, lessons, users) => {
     const mappedGroups = groups.map((group) => {
       const today = new Date();
 
@@ -55,9 +55,9 @@ export const selectSchedule = createSelector(
       const endDate = new Date(startDate);
       endDate.setHours(endDate.getHours() + 1);
 
-      // const groupTeacher = tutors.find(
-      //   (tutor) => tutor.id === group.teacher?.uid
-      // );
+      const groupTeacher = users.find(
+        (tutor) => tutor.uid === group.teacher?.uid
+      );
 
       return {
         text: group.name,
@@ -68,7 +68,7 @@ export const selectSchedule = createSelector(
         disabled: true,
         tutorUid: group.teacher?.uid,
         tutorName:
-          `${group.teacher?.firstName} ${group.teacher?.lastName}` ?? 'לא נבחר',
+          `${groupTeacher?.firstName} ${groupTeacher?.lastName}` ?? 'לא נבחר',
         type: 'group'
       };
     });
