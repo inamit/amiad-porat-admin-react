@@ -74,9 +74,12 @@ export const selectSchedule = createSelector(
     });
 
     const mappedLessons = lessons.map((lesson) => {
+      const lessonTutor = users.find((user) => user.uid === lesson.tutor?.uid);
       return {
         id: lesson.id,
-        tutorName: `${lesson.tutor?.firstName || 'לא נבחר'}`,
+        tutorName: `${
+          `${lessonTutor.firstName} ${lessonTutor.lastName}` || 'לא נבחר'
+        }`,
         startDate: lesson.start,
         endDate: lesson.end,
         tutorUid: lesson.tutor?.uid,

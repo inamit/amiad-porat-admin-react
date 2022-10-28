@@ -95,7 +95,7 @@ const AppointmentTooltip = (props) => {
             <RoomIcon />
           </Grid>
           <Grid item xs={10} textAlign="start" alignSelf="center">
-            {room?.text || data.type === 'group' ? 'לא נתמך' : 'לא נבחר'}
+            {data.type === 'group' ? 'לא נתמך' : room?.text ?? 'לא נבחר'}
           </Grid>
           <Grid item xs={2} alignSelf="center">
             <PersonIcon />
