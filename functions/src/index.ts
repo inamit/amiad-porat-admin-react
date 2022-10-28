@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/lib/providers/https';
 import { DocumentSnapshot } from 'firebase-functions/v1/firestore';
+import { FirebaseError } from 'firebase-admin';
 
 admin.initializeApp();
 
@@ -68,7 +69,7 @@ export const createUser = functions.https.onCall(async (data, context) => {
     return { uid };
   } catch (error) {
     if (error instanceof Object && 'code' in error) {
-      switch (error.code) {
+      switch ((error as FirebaseError).code) {
         case 'auth/email-already-exists':
           throw new HttpsError('already-exists', 'המייל כבר קיים במערכת');
       }
