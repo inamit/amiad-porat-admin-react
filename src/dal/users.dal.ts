@@ -6,7 +6,7 @@ import {
   getDoc,
   getDocs,
   query,
-  setDoc,
+  updateDoc,
   where,
   WhereFilterOp
 } from 'firebase/firestore';
@@ -62,12 +62,10 @@ export const getAllUsers = async (): Promise<User[]> => {
   return (await getUsers()).data as User[];
 };
 
-export const updateUser = async (updatedUser: User) => {
-  const userRef = doc(db, usersCollectionName, updatedUser.uid).withConverter(
-    userConverter
-  );
+export const updateUser = async (id: string, updatedUser: Partial<User>) => {
+  const userRef = doc(db, usersCollectionName, id).withConverter(userConverter);
 
-  await setDoc(userRef, updatedUser);
+  await updateDoc(userRef, updatedUser);
   return updatedUser;
 };
 

@@ -4,12 +4,11 @@ import {
   collection,
   addDoc,
   FirestoreError,
-  DocumentReference,
-  DocumentData,
   doc,
   query,
   where,
   documentId,
+  getDoc,
   setDoc
 } from 'firebase/firestore';
 import { db } from 'firebaseConfig';
@@ -60,18 +59,16 @@ export const teacherHasGroupByDateTime = async (
   return !docs.empty;
 };
 
-export const updateGroup = async (updatedGroup: Group) => {
-  const groupRef = doc(db, groupsCollectionName, updatedGroup.id).withConverter(
+export const updateGroup = async (id: string, updatedGroup: Group) => {
+  const groupRef = doc(db, groupsCollectionName, id).withConverter(
     groupConverter
   );
 
   await setDoc(groupRef, updatedGroup);
-  return updatedGroup;
+  return { id, changes: updatedGroup };
 };
 
-export const createNewGroup = async (
-  group: AddGroupModel
-): Promise<DocumentReference<DocumentData>> => {
+export const saveNewGroup = async (group: AddGroupModel): Promise<Group> => {
   try {
     const doc = await addDoc(collection(db, groupsCollectionName), {
       name: group.name,
@@ -84,7 +81,7 @@ export const createNewGroup = async (
         .padStart(2, '0')}`
     });
 
-    return doc;
+    return (await getDoc(doc.withConverter(groupConverter))).data();
   } catch (error) {
     let message = '';
 

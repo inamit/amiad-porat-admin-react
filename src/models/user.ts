@@ -8,6 +8,7 @@ export default class User {
   public lastName: string;
   public phoneNo: string;
   public role: EnumValue<number>;
+  public disabled: boolean;
 
   [extraField: string]: any;
 

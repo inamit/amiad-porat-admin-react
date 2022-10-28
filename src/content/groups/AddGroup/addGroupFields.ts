@@ -3,15 +3,15 @@ import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRen
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { isRequired } from 'validations/stringValidations';
 import { FieldType } from 'models/enums/fieldTypes';
-import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import { RadioGroupDirection } from 'models/enums/radioGroupDirection';
 import { isNumberRequired } from 'validations/numberValidations';
 import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { isDateRequired } from 'validations/dateValidations';
-import { useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
+import { selectUsers } from 'store/users/users.slice';
+import User from 'models/user';
 
 export const addGroupFields: FormFieldType[] = [
   {
@@ -25,14 +25,13 @@ export const addGroupFields: FormFieldType[] = [
     objectLocation: 'teacher',
     placeholder: 'מורה',
     icon: PersonOutlinedIcon,
-    type: FieldType.ASYNC_SELECT,
-    asyncChildren: async () => {
-      const users = await getUsersWithRoleBiggerThan(UserRoles.TEACHER);
-      return users.map((user) => ({
-        value: user.uid,
-        label: `${user.firstName} ${user.lastName}`
-      }));
-    },
+    type: FieldType.STORE_SELECT,
+    select: selectUsers,
+    filter: (user: User) => (user.role as unknown) >= UserRoles.TEACHER.value,
+    map: (user: User) => ({
+      value: user.uid,
+      label: `${user.firstName} ${user.lastName}`
+    }),
     required: true,
     multiple: false,
     validationFunction: isRequired

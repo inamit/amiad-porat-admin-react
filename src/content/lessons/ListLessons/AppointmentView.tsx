@@ -8,7 +8,7 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 
 const AppointmentView = (props) => {
-  const subjects = useAppSelector(selectSubjects).values;
+  const subjects = useAppSelector(selectSubjects);
   const { targetedAppointmentData } = props.data;
 
   const tutor =

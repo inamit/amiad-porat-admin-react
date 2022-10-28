@@ -13,15 +13,10 @@ import {
 } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
 import React, { useEffect } from 'react';
-import { getUsersWithRoleBiggerThan } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import AddGroup from '../AddGroup';
-import {
-  getAllGroups,
-  teacherHasGroupByDateTime,
-  updateGroup
-} from 'dal/groups.dal';
+import { teacherHasGroupByDateTime } from 'dal/groups.dal';
 import Group from 'models/group';
 import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import { TimePicker } from '@mui/x-date-pickers';
@@ -33,12 +28,19 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
-import { useAppSelector } from 'store/store';
+import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectSubjects } from 'store/config/config.slice';
 import { getEnumByValue } from 'models/enums/enumUtils';
 import { getHourStringFromDate } from 'utils/dateUtils';
 import Alert, { AlertProps } from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
+import {
+  selectGroups,
+  selectGroupsLoadStatus,
+  updateGroup
+} from 'store/groups/groups.slice';
+import { LoadStatus } from 'store/loadStatus';
+import { selectUsers } from 'store/users/users.slice';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -131,12 +133,13 @@ const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
 };
 
 const ListGroups = () => {
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [rows, setRows] = React.useState<GridRowsProp<Group>>([]);
-  type Row = typeof rows[number];
+  const dispatch = useAppDispatch();
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
   const [teachers, setTeachers] = React.useState<User[]>([]);
-  const subjects = useAppSelector(selectSubjects).values;
+  const subjects = useAppSelector(selectSubjects);
+  const groups = useAppSelector(selectGroups);
+  const loadingStatus = useAppSelector(selectGroupsLoadStatus);
+  const users = useAppSelector(selectUsers);
 
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
@@ -144,33 +147,38 @@ const ListGroups = () => {
   > | null>(null);
   const handleCloseSnackbar = () => setSnackbar(null);
 
-  const processRowUpdate = React.useCallback(async (newRow: GridRowModel) => {
-    const group = await updateGroup(newRow as Group);
-    setSnackbar({ children: 'השיעור התעדכן בהצלחה', severity: 'success' });
-    return group;
-  }, []);
+  const processRowUpdate = React.useCallback(
+    async (newRow: GridRowModel, oldRow: GridRowModel) => {
+      try {
+        await dispatch(updateGroup(newRow as Group)).unwrap();
+        setSnackbar({
+          severity: 'success',
+          children: 'עדכון הקבוצה התבצע בהצלחה'
+        });
+        return newRow;
+      } catch (e) {
+        setSnackbar({
+          severity: 'error',
+          children: 'התרחשה שגיאה בעדכון הקבוצה'
+        });
+        return oldRow;
+      }
+    },
+    []
+  );
 
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
     setSnackbar({ children: error.message, severity: 'error' });
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    setTeachers(
+      users.filter(
+        (user) => (user.role as unknown as number) >= UserRoles.TEACHER.value
+      )
+    );
+  }, [users]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      const users = await getUsersWithRoleBiggerThan(UserRoles.TEACHER);
-      setTeachers(users);
-
-      const groups = await getAllGroups();
-      setRows(groups);
-    } finally {
-      setLoading(false);
-    }
-  };
   const deleteGroup = React.useCallback(
     (id: GridRowId) => () => {
       // TODO: implement delete group
@@ -179,7 +187,29 @@ const ListGroups = () => {
     []
   );
 
-  const columns = React.useMemo<GridColumns<Row>>(
+  const checkTeacherAvailability = async (params, teacherId, day, hour) => {
+    const isTeacherBusy = await teacherHasGroupByDateTime(
+      teacherId,
+      day,
+      hour,
+      [params.id.toString()]
+    );
+    const teacherBusyErrorMessage =
+      'ביום והשעה של השיעור הזה, יש למורה שיעור אחר';
+
+    if (isTeacherBusy) {
+      setSnackbar({
+        children: teacherBusyErrorMessage,
+        severity: 'error'
+      });
+    }
+    return {
+      ...params.props,
+      error: isTeacherBusy
+    };
+  };
+
+  const columns = React.useMemo<GridColumns<GridRowsProp<Group>[number]>>(
     () => [
       {
         field: 'name',
@@ -204,27 +234,13 @@ const ListGroups = () => {
             label: `${teacher.firstName} ${teacher.lastName}`
           }));
         },
-        preProcessEditCellProps: async (params) => {
-          const isTeacherBusy = await teacherHasGroupByDateTime(
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
             params.props.value,
             params.row.day,
-            params.row.hour,
-            [params.id.toString()]
-          );
-          const teacherBusyErrorMessage =
-            'ביום והשעה של השיעור הזה, יש למורה שיעור אחר';
-
-          if (isTeacherBusy) {
-            setSnackbar({
-              children: teacherBusyErrorMessage,
-              severity: 'error'
-            });
-          }
-          return {
-            ...params.props,
-            error: isTeacherBusy
-          };
-        },
+            params.row.hour
+          ),
         valueSetter: (params) => {
           return {
             ...params.row,
@@ -252,7 +268,14 @@ const ListGroups = () => {
         valueGetter: (params) => params.row.day,
         type: 'singleSelect',
         editable: true,
-        valueOptions: () => Object.values(DaysOfWeek)
+        valueOptions: () => Object.values(DaysOfWeek),
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
+            params.row.teacher.uid,
+            params.props.value,
+            params.row.hour
+          )
       },
       {
         field: 'hour',
@@ -274,7 +297,14 @@ const ListGroups = () => {
             ...params.row,
             hour: getHourStringFromDate(params.value)
           };
-        }
+        },
+        preProcessEditCellProps: async (params) =>
+          checkTeacherAvailability(
+            params,
+            params.row.teacher.uid,
+            params.row.day,
+            getHourStringFromDate(params.props.value)
+          )
       },
       {
         field: 'actions',
@@ -314,24 +344,26 @@ const ListGroups = () => {
         <CardContent>
           <DataGrid
             autoHeight={true}
-            rows={rows}
+            rows={groups}
             columns={columns}
             components={{ NoRowsOverlay: NoDataText }}
             getRowId={(row) => row.id}
             experimentalFeatures={{ newEditingApi: true }}
             processRowUpdate={processRowUpdate}
             onProcessRowUpdateError={handleProcessRowUpdateError}
-            loading={loading}
+            loading={loadingStatus === LoadStatus.LOADING}
+            error={
+              loadingStatus === LoadStatus.FAILED
+                ? 'התרחשה שגיאה בשליפת השיעורים'
+                : null
+            }
           />
         </CardContent>
       </Card>
       <AddGroup
         isOpen={addGroupOpen}
-        onClose={(event, reason, addedGroup?) => {
+        onClose={(event, reason) => {
           setAddGroupOpen(false);
-          if (addedGroup) {
-            setRows([...rows, addedGroup]);
-          }
         }}
       />
       {!!snackbar && (

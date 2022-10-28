@@ -1,21 +1,12 @@
 import { LoadingButton } from '@mui/lab';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  DialogContentText,
-  Box,
-  Button
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Box } from '@mui/material';
 import GenericFormFields, {
   areFieldsValid
 } from 'components/GenericFormFields';
-import { createNewGroup, teacherHasGroupByDateTime } from 'dal/groups.dal';
-import { getDoc } from 'firebase/firestore';
-import { FormFieldType } from 'models/fieldsConfigs';
-import Group, { groupConverter } from 'models/group';
+import { teacherHasGroupByDateTime } from 'dal/groups.dal';
 import React, { useEffect } from 'react';
+import { createNewGroup } from 'store/groups/groups.slice';
+import { useAppDispatch } from 'store/store';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { getHourStringFromDate } from 'utils/dateUtils';
@@ -24,11 +15,12 @@ import { AddGroupModel } from './addGroupModel';
 
 interface AddGroupProps {
   isOpen: boolean;
-  onClose: (event: {}, reason: string, addedGroup?: Group) => void;
+  onClose: (event: {}, reason: string) => void;
 }
 
 const AddGroup = (props: AddGroupProps) => {
   const MySwal = withReactContent(Swal);
+  const dispatch = useAppDispatch();
 
   const initialGroup: AddGroupModel = {
     name: '',
@@ -80,13 +72,9 @@ const AddGroup = (props: AddGroupProps) => {
           return;
         }
       }
-      const docRef = (await createNewGroup(group)).withConverter(
-        groupConverter
-      );
-      const doc = await getDoc(docRef);
-      MySwal.fire({ title: 'השיעור נוסף', icon: 'success' });
+      dispatch(createNewGroup(group));
 
-      props.onClose(undefined, 'success', doc.data());
+      props.onClose(undefined, 'success');
     } catch (error) {
       MySwal.fire({
         title: 'לא היה ניתן להוסיף את השיעור',

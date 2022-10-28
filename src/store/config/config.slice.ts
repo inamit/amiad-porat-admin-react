@@ -5,8 +5,9 @@ import {
   AsyncThunk
 } from '@reduxjs/toolkit';
 import { getGrades, getRooms, getSubjects } from 'dal/config.dal';
+import { LoadStatus } from 'store/loadStatus';
 import { RootState } from 'store/store';
-import { ConfigModel, initialState, LoadStatus } from './config.model';
+import { ConfigModel, initialState } from './config.model';
 
 export const fetchConfig = () => (dispatch) => {
   dispatch(fetchGrades());
@@ -48,8 +49,9 @@ const addCases = (
     });
 };
 
-export const selectGrades = (state: RootState) => state.config.grades;
-export const selectSubjects = (state: RootState) => state.config.subjects;
-export const selectRooms = (state: RootState) => state.config.rooms;
+export const selectGrades = (state: RootState) => state.config.grades.values;
+export const selectSubjects = (state: RootState) =>
+  state.config.subjects.values;
+export const selectRooms = (state: RootState) => state.config.rooms.values;
 
 export default configSlice.reducer;

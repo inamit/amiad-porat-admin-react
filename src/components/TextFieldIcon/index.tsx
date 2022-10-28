@@ -1,6 +1,7 @@
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
-import React from 'react';
+import { FieldType } from 'models/enums/fieldTypes';
+import React, { useEffect } from 'react';
 import { useState } from 'react';
 
 interface TextFieldIconProps {
@@ -13,8 +14,11 @@ interface TextFieldIconProps {
   endIcon?: any;
   startIcon?: any;
   autoComplete?: any;
-  type?: string;
+  type?: FieldType;
+  value?: string | number;
   placeholder: string;
+  min?: number;
+  max?: number;
   other?: any[];
 }
 
@@ -34,9 +38,12 @@ const TextFieldIcon = ({
   onChange,
   error,
   helperText,
-  type
+  type,
+  value,
+  min,
+  max
 }: TextFieldIconProps) => {
-  const [shrink, setShrink] = useState(false);
+  const [shrink, setShrink] = useState(value !== undefined);
 
   const shrinkLabel = (event) => {
     setShrink(true);
@@ -67,6 +74,7 @@ const TextFieldIcon = ({
       label={placeholder}
       error={error}
       helperText={helperText}
+      value={value}
       InputLabelProps={{
         shrink: shrink,
         sx: {
@@ -84,6 +92,10 @@ const TextFieldIcon = ({
         startAdornment: startIcon && (
           <InputAdornment position={'start'}>{startIcon}</InputAdornment>
         )
+      }}
+      inputProps={{
+        min,
+        max
       }}
     />
   );

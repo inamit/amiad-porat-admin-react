@@ -6,25 +6,36 @@ import {
   ListItem,
   ListItemText,
   Skeleton,
+  TextField,
   Typography
 } from '@mui/material';
-import { getScheduledStudentsUidBetween } from 'dal/lessons.dal';
-import { getUsersWithRole } from 'dal/users.dal';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
 import React, { useEffect } from 'react';
 import { getString } from 'firebase/remote-config';
 import { remoteConfig } from 'firebaseConfig';
+import { useAppSelector } from 'store/store';
+import { selectUsers } from 'store/users/users.slice';
+import { selectLessons } from 'store/lessons/lessons.slice';
+import StudentStatus from 'models/enums/studentStatus';
+import { isSameDate } from 'utils/dateUtils';
 
 const UnscheduledStudents = (props) => {
   const [loading, setLoading] = React.useState<boolean>(true);
+  const [startDate, setStartDate] = React.useState<Date>(new Date());
+  const [endDate, setEndDate] = React.useState<Date>(() => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + 7);
+    return date;
+  });
+  const allUsers = useAppSelector(selectUsers);
+  const allLessons = useAppSelector(selectLessons);
+
   const [students, setStudents] = React.useState<User[]>([]);
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + 7);
 
   useEffect(() => {
     loadStudents();
-  }, []);
+  }, [allLessons, allUsers, startDate, endDate]);
 
   const whatsappMessageDefault = getString(
     remoteConfig,
@@ -34,21 +45,26 @@ const UnscheduledStudents = (props) => {
   const loadStudents = async () => {
     setLoading(true);
 
-    const scheduledStudents = await getScheduledStudentsUidBetween(
-      new Date(),
-      endDate
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    const scheduledStudents = allLessons
+      .filter((lesson) => lesson.start >= startDate && lesson.end <= endDate)
+      .map((lesson) =>
+        lesson.students
+          .filter((value) => value.status === StudentStatus.Scheduled)
+          .map((student) => student.student?.uid)
+      )
+      .reduce((acc, uidArr) => [...acc, ...uidArr], []);
+
+    const allStudents = allUsers.filter(
+      (user) =>
+        (user.role as unknown as number) === UserRoles.STUDENT.value &&
+        !user.disabled
     );
 
-    try {
-      const allStudents = await getUsersWithRole(UserRoles.STUDENT);
-      setStudents(
-        allStudents.filter(
-          (student) => !scheduledStudents.includes(student.uid)
-        )
-      );
-    } catch (e) {
-      console.error(e);
-    }
+    setStudents(
+      allStudents.filter((student) => !scheduledStudents.includes(student.uid))
+    );
 
     setLoading(false);
   };
@@ -56,7 +72,11 @@ const UnscheduledStudents = (props) => {
     <Card>
       <CardHeader
         title="תלמידים שלא קבעו תגבור לשבוע הקרוב"
-        subheader={`היום עד ${endDate.toLocaleDateString('he-IL')}`}
+        subheader={`${
+          isSameDate(startDate, new Date())
+            ? 'היום'
+            : startDate.toLocaleDateString('he-IL')
+        } עד ${endDate.toLocaleDateString('he-IL')}`}
       />
       <CardContent>
         {loading ? (
