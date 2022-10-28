@@ -3,6 +3,8 @@ name: Deploy to Firebase Hosting on merge to staging
   push:
     branches:
       - staging
+    paths-ignore:
+      - 'functions/**'
 jobs:
   deploy_for_staging:
     runs-on: ubuntu-latest
