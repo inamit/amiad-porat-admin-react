@@ -3,14 +3,12 @@ import {
   collection,
   deleteDoc,
   doc,
-  documentId,
   getDoc,
   getDocs,
   query,
   setDoc,
   where,
-  WhereFilterOp,
-  writeBatch
+  WhereFilterOp
 } from 'firebase/firestore';
 import { db } from 'firebaseConfig';
 import StudentStatus from 'models/enums/studentStatus';

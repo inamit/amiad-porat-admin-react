@@ -32,10 +32,10 @@ const AddLesson = (props) => {
     id: props.id,
     date: props.date ?? new Date(),
     hour: props.date,
-    subject: 'math',
+    subject: props.subject ?? 'math',
     teacher: props.tutorUid ?? '',
     room: props.roomId ?? '',
-    maxStudents: 5
+    maxStudents: props.maxStudents ?? 5
   });
   const [validationErrors, setValidationErrors] = React.useState<{
     [key: string]: string;
@@ -70,7 +70,9 @@ const AddLesson = (props) => {
       [],
       lesson.subject,
       { id: lesson.room },
-      lesson.maxStudents
+      typeof lesson.maxStudents === 'string'
+        ? parseInt(lesson.maxStudents)
+        : lesson.maxStudents
     );
     const available = await validateAvailability(lessonObj);
 

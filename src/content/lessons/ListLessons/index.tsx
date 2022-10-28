@@ -55,6 +55,8 @@ const ListLessons = (props) => {
     date?: string | Date;
     tutorUid?: string;
     roomId?: string;
+    maxStudents?: number;
+    subject?: string;
   }>({ date: new Date() });
   const [addLessonOpen, setAddLessonOpen] = React.useState<boolean>(false);
   const [addBulkLessonOpen, setAddBulkLessonOpen] =
@@ -117,9 +119,17 @@ const ListLessons = (props) => {
   }, [tutors]);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
-    let { startDate, tutorUid, roomId, id } = e.appointmentData;
+    let { startDate, tutorUid, roomId, id, maxStudents, subject } =
+      e.appointmentData;
     e.cancel = true;
-    setAddLessonProps({ id, date: startDate, tutorUid, roomId });
+    setAddLessonProps({
+      id,
+      date: startDate,
+      tutorUid,
+      roomId,
+      maxStudents,
+      subject
+    });
     setAddLessonOpen(true);
   };
 
