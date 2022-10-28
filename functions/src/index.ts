@@ -67,16 +67,17 @@ export const createUser = functions.https.onCall(async (data, context) => {
     await admin.firestore().collection('users').doc(uid).set(info);
     return { uid };
   } catch (error) {
-    switch ((error as any).code) {
-      case 'auth/email-already-exists':
-        throw new HttpsError('already-exists', 'המייל כבר קיים במערכת');
-      default:
-        functions.logger.error(
-          `Unexpected error occured while creating new user.`,
-          error
-        );
-        throw new HttpsError('internal', 'קרתה תקלה. פנה לתמיכה');
+    if (error instanceof Object && 'code' in error) {
+      switch (error.code) {
+        case 'auth/email-already-exists':
+          throw new HttpsError('already-exists', 'המייל כבר קיים במערכת');
+      }
     }
+    functions.logger.error(
+      `Unexpected error occured while creating new user.`,
+      error
+    );
+    throw new HttpsError('internal', 'קרתה תקלה. פנה לתמיכה');
   }
 });
 
@@ -106,38 +107,42 @@ export const getAllUsers = functions.https.onCall(async (data, context) => {
     const { users } = await admin.auth().listUsers();
 
     return await Promise.all(
-      users.map(
-        async ({
-          uid,
-          email,
-          metadata,
-          customClaims,
-          phoneNumber,
-          disabled
-        }) => {
-          try {
-            const userInfo: DocumentSnapshot = await admin
-              .firestore()
-              .collection('users')
-              .doc(uid)
-              .get();
+      users
+        .map(
+          async ({
+            uid,
+            email,
+            metadata,
+            customClaims,
+            phoneNumber,
+            disabled
+          }) => {
+            try {
+              const userInfo: DocumentSnapshot = await admin
+                .firestore()
+                .collection('users')
+                .doc(uid)
+                .get();
 
-            const response: any = {
-              ...userInfo.data(),
-              uid,
-              email,
-              metadata,
-              customClaims,
-              phoneNumber,
-              disabled
-            };
+              const response = {
+                ...userInfo.data(),
+                uid,
+                email,
+                metadata,
+                customClaims,
+                phoneNumber,
+                disabled
+              };
 
-            return response;
-          } catch (e) {
-            functions.logger.error(e);
+              return response;
+            } catch (e) {
+              functions.logger.error(e);
+            }
+
+            return undefined;
           }
-        }
-      )
+        )
+        .filter((user) => user !== undefined)
     );
   } catch (e) {
     functions.logger.error(e);
