@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
   getDocs,
   query,
@@ -17,39 +18,66 @@ import Lesson, { lessonConverter } from 'models/lesson';
 
 const lessonsCollectionName = 'lessons';
 
-export const isTutorAvailable = async (lessonDate: Date, tutorUID: string) => {
+export const isTutorAvailable = async (
+  lessonDate: Date,
+  tutorUID: string,
+  excludedLessons?: string[]
+) => {
   if (tutorUID) {
     const endDate = new Date(lessonDate);
     endDate.setHours(endDate.getHours() + 1);
-    const existingLessons = await getDocs(
-      query(
-        collection(db, lessonsCollectionName),
-        where('date', '>=', lessonDate),
-        where('date', '<', endDate),
-        where('tutor', '==', tutorUID)
-      )
-    );
 
-    return existingLessons.empty;
+    const queryConstraints = [
+      where('date', '>=', lessonDate),
+      where('date', '<', endDate),
+      where('tutor', '==', tutorUID)
+    ];
+
+    let existingLessons = (
+      await getDocs(
+        query(collection(db, lessonsCollectionName), ...queryConstraints)
+      )
+    ).docs;
+
+    if (excludedLessons) {
+      existingLessons = existingLessons.filter(
+        (lesson) => !excludedLessons.includes(lesson.id)
+      );
+    }
+
+    return existingLessons.length === 0;
   }
 
   return true;
 };
 
-export const isRoomAvailable = async (lessonDate: Date, roomId: string) => {
+export const isRoomAvailable = async (
+  lessonDate: Date,
+  roomId: string,
+  excludedLessons?: string[]
+) => {
   if (roomId) {
     const endDate = new Date(lessonDate);
     endDate.setHours(endDate.getHours() + 1);
-    const existingLessons = await getDocs(
-      query(
-        collection(db, lessonsCollectionName),
-        where('date', '>=', lessonDate),
-        where('date', '<', endDate),
-        where('room', '==', roomId)
-      )
-    );
+    const queryConstraints = [
+      where('date', '>=', lessonDate),
+      where('date', '<', endDate),
+      where('room', '==', roomId)
+    ];
 
-    return existingLessons.empty;
+    let existingLessons = (
+      await getDocs(
+        query(collection(db, lessonsCollectionName), ...queryConstraints)
+      )
+    ).docs;
+
+    if (excludedLessons) {
+      existingLessons = existingLessons.filter(
+        (lesson) => !excludedLessons.includes(lesson.id)
+      );
+    }
+
+    return existingLessons.length === 0;
   }
 
   return true;

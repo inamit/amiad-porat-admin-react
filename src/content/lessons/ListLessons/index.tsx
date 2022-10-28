@@ -1,6 +1,5 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
-import { getAllGroups } from 'dal/groups.dal';
 import { selectSchedule, useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
@@ -21,10 +20,7 @@ import Scheduler, {
   View
 } from 'devextreme-react/scheduler';
 import { AppointmentFormOpeningEvent } from 'devextreme/ui/scheduler';
-import { isRoomAvailable, isTutorAvailable } from 'dal/lessons.dal';
 import AppointmentView from './AppointmentView';
-import withReactContent from 'sweetalert2-react-content';
-import Swal from 'sweetalert2';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
 import AppointmentTooltip from './AppointmentTooltip';
@@ -48,7 +44,6 @@ const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
 }));
 
 const ListLessons = (props) => {
-  const MySwal = withReactContent(Swal);
   const scheduler = useRef<Scheduler>(null);
   const dispatch = useAppDispatch();
 
@@ -56,6 +51,7 @@ const ListLessons = (props) => {
   const maxDate = useAppSelector(selectMaxLessonsDate);
 
   const [addLessonProps, setAddLessonProps] = React.useState<{
+    id?: string;
     date?: string | Date;
     tutorUid?: string;
     roomId?: string;
@@ -118,61 +114,13 @@ const ListLessons = (props) => {
     if (tutors.filter((tutor) => tutor.id === '').length === 0) {
       tutors.push({ id: '', text: 'לא נבחר' });
     }
-    console.log('tutors changed', tutors);
   }, [tutors]);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
-    let { startDate, tutorUid, roomId } = e.appointmentData;
+    let { startDate, tutorUid, roomId, id } = e.appointmentData;
     e.cancel = true;
-    setAddLessonProps({ date: startDate, tutorUid, roomId });
+    setAddLessonProps({ id, date: startDate, tutorUid, roomId });
     setAddLessonOpen(true);
-  };
-
-  const validateTutorAvailability = async (lesson: Lesson) => {
-    if (!(await isTutorAvailable(lesson.start, lesson.tutor.uid))) {
-      const result = await MySwal.fire({
-        icon: 'warning',
-        title: 'שים לב!',
-        text: 'המתרגל שנבחר תפוס בשעה שנבחרה. האם ברצונך ליצור את התרגול?',
-        confirmButtonText: 'כן',
-        showDenyButton: true,
-        denyButtonText: 'לא, ביטול פעולה',
-        allowOutsideClick: false
-      });
-
-      if (result.isDenied) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const validateRoomAvailability = async (lesson: Lesson) => {
-    if (!(await isRoomAvailable(lesson.start, lesson.room.id))) {
-      const result = await MySwal.fire({
-        icon: 'warning',
-        title: 'שים לב!',
-        text: 'הכיתה שנבחרה תפוסה בשעה שנבחרה. האם ברצונך ליצור את התרגול?',
-        confirmButtonText: 'כן',
-        showDenyButton: true,
-        denyButtonText: 'לא, ביטול פעולה',
-        allowOutsideClick: false
-      });
-
-      if (result.isDenied) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const validateAvailability = async (lesson: Lesson) => {
-    const isTutorAvailable = await validateTutorAvailability(lesson);
-    const isRoomAvailable = await validateRoomAvailability(lesson);
-
-    return isTutorAvailable && isRoomAvailable;
   };
 
   const addBulkLessonsCallback = (addedLessons: Lesson[]) => {
@@ -181,6 +129,12 @@ const ListLessons = (props) => {
 
     scheduler.current.instance.endUpdate();
     setAddBulkLessonOpen(false);
+  };
+
+  const addLessonCallback = (available: boolean) => {
+    if (available) {
+      setAddLessonOpen(false);
+    }
   };
 
   const openLessonsCallback = (updatedLessons: Lesson[]) => {
@@ -240,12 +194,6 @@ const ListLessons = (props) => {
           const startOfWeek = new Date(curr.setDate(first));
           const endOfWeek = new Date(curr.setDate(last));
 
-          console.log('start', startOfWeek);
-          console.log('min', minDate);
-
-          console.log('end', endOfWeek);
-          console.log('max', maxDate);
-
           if (
             startOfWeek.getTime() < minDate?.getTime() ||
             endOfWeek.getTime() > maxDate?.getTime()
@@ -298,7 +246,10 @@ const ListLessons = (props) => {
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
         <DialogTitle>תגבור חדש</DialogTitle>
         <DialogContent>
-          <AddLesson {...addLessonProps} />
+          <AddLesson
+            {...addLessonProps}
+            addLessonCallback={addLessonCallback}
+          />
         </DialogContent>
       </Dialog>
 

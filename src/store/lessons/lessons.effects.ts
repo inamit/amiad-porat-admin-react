@@ -1,6 +1,14 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { createMultipleLessons } from 'dal/lessons.dal';
-import { addLessons, createBulkLessons } from './lessons.slice';
+import {
+  createMultipleLessons,
+  createNewLessonFromLessonObject
+} from 'dal/lessons.dal';
+import {
+  addLesson,
+  addLessons,
+  createBulkLessons,
+  createOrUpdateLesson
+} from './lessons.slice';
 
 export const lessonsMiddleware = createListenerMiddleware();
 
@@ -9,6 +17,18 @@ lessonsMiddleware.startListening({
   effect: async (action, listenerApi) => {
     const lessons = await createMultipleLessons(action.payload);
     listenerApi.dispatch(addLessons(lessons));
+  }
+});
+
+lessonsMiddleware.startListening({
+  actionCreator: createOrUpdateLesson,
+  effect: async (action, listenerApi) => {
+    if (action.payload.id) {
+      alert('update lesson ' + action.payload.id);
+    } else {
+      const lesson = await createNewLessonFromLessonObject(action.payload);
+      listenerApi.dispatch(addLesson(lesson));
+    }
   }
 });
 

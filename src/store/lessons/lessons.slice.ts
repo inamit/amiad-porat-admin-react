@@ -29,6 +29,10 @@ export const createBulkLessons = createAction<Lesson[]>(
   'lessons/createBulkLessons'
 );
 
+export const createOrUpdateLesson = createAction<Lesson>(
+  'lessons/createOrUpdateLesson'
+);
+
 const lessonsSlice = createSlice({
   name: 'lessons',
   initialState: initialState,
