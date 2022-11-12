@@ -44,6 +44,7 @@ import AddLesson from '../AddLesson';
 import { selectUserByUid, selectUsers } from 'store/users/users.slice';
 import { selectGroups } from 'store/groups/groups.slice';
 import { AppointmentType } from 'models/enums/appointmentType';
+import LessonDetails from './LessonDetails';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute',
@@ -191,24 +192,6 @@ const ListLessons = (props) => {
     text: room.label
   }));
 
-  const getAppointmentName = (appointment) => {
-    let type;
-    const subject =
-      subjects.find((subject) => subject.id === appointment.subject)?.text ||
-      appointment.text;
-
-    switch (appointment.type) {
-      case AppointmentType.LESSON:
-        type = 'תגבור';
-        break;
-      case AppointmentType.GROUP:
-        type = 'שיעור';
-        break;
-    }
-
-    return `${type || ''} ${subject || ''}`;
-  };
-
   useEffect(() => {
     if (rooms.filter((room) => room.id === '').length === 0) {
       rooms.push({ id: '', text: 'לא נבחר' });
@@ -278,7 +261,7 @@ const ListLessons = (props) => {
     return <AppointmentTooltip {...props} scheduler={scheduler} />;
   });
 
-  const updateDraggedLesson = async (e: AppointmentUpdatingEvent) => {
+  const updateLessonFromScheduler = async (e: AppointmentUpdatingEvent) => {
     scheduler.current.instance.beginUpdate();
     const lesson = e.newData;
 
@@ -301,6 +284,14 @@ const ListLessons = (props) => {
     setLessonDetailsOpen(true);
   };
 
+  const setIsLessonOpen = (isOpen: boolean) => {
+    scheduler.current.instance.updateAppointment(selectedLesson, {
+      ...selectedLesson,
+      isOpen
+    });
+    setLessonDetailsOpen(false);
+  };
+
   return (
     <Paper>
       <Scheduler
@@ -310,7 +301,7 @@ const ListLessons = (props) => {
         endDayHour={21}
         defaultCurrentView="week"
         onAppointmentFormOpening={onAppointmentFormOpening}
-        onAppointmentUpdating={updateDraggedLesson}
+        onAppointmentUpdating={updateLessonFromScheduler}
         onAppointmentClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
@@ -378,13 +369,16 @@ const ListLessons = (props) => {
 
       <Dialog
         open={lessonDetailsOpen}
+        fullWidth={true}
         onClose={() => {
           setLessonDetailsOpen(false);
           setSelectedLesson({});
         }}
       >
-        <DialogTitle>{getAppointmentName(selectedLesson)}</DialogTitle>
-        <DialogContent></DialogContent>
+        <LessonDetails
+          data={selectedLesson}
+          setIsLessonOpen={setIsLessonOpen}
+        />
       </Dialog>
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
         <DialogTitle>תגבור חדש</DialogTitle>
