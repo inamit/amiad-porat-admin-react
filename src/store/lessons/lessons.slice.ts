@@ -1,13 +1,13 @@
 import {
   createAction,
   createAsyncThunk,
-  createSelector,
   createSlice,
   EntityId,
   PayloadAction,
   Update
 } from '@reduxjs/toolkit';
 import {
+  addStudentsToLesson as dbAddStudentsToLesson,
   loadLessonsBetween,
   updateLesson as dbUpdateLesson
 } from 'dal/lessons.dal';
@@ -41,6 +41,13 @@ export const createOrUpdateLesson = createAction<Lesson>(
 export const updateLesson = createAsyncThunk(
   'lessons/update',
   (lesson: Lesson, thunkApi) => dbUpdateLesson(lesson.id, lesson)
+);
+
+export const addStudentsToLesson = createAsyncThunk<
+  Update<Lesson>,
+  { lessonId: string; studentUids: string[] }
+>('lessons/addStudent', ({ lessonId, studentUids }, thunkApi) =>
+  dbAddStudentsToLesson(lessonId, studentUids)
 );
 
 const lessonsSlice = createSlice({
@@ -98,6 +105,13 @@ const lessonsSlice = createSlice({
       });
 
     builder.addCase(updateLesson.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(addStudentsToLesson.fulfilled, (state, action) => {
       state.entitiesState = lessonsAdapter.updateOne(
         state.entitiesState,
         action.payload

@@ -1,5 +1,7 @@
+import { Update } from '@reduxjs/toolkit';
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -7,6 +9,7 @@ import {
   getDocs,
   query,
   setDoc,
+  updateDoc,
   where,
   WhereFilterOp
 } from 'firebase/firestore';
@@ -127,6 +130,25 @@ export const updateLesson = async (
 
   await setDoc(lessonRef, updatedLesson);
   return { id, changes: updatedLesson };
+};
+
+export const addStudentsToLesson = async (
+  lessonId: string,
+  studentsUid: string[]
+): Promise<Update<Lesson>> => {
+  const lessonToAdd = doc(db, lessonsCollectionName, lessonId);
+
+  const studentsToAdd = studentsUid.map((studentId) => {
+    return { student: studentId, status: StudentStatus.Scheduled };
+  });
+
+  await updateDoc(lessonToAdd, { students: arrayUnion(...studentsToAdd) });
+
+  const updatedLesson = await (
+    await getDoc(lessonToAdd.withConverter(lessonConverter))
+  ).data();
+
+  return { id: lessonId, changes: updatedLesson };
 };
 
 export const deleteLessonById = async (lessonId: string) => {
