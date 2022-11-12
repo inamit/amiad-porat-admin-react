@@ -117,15 +117,16 @@ export const loadLessonsBetween = async (
   return lessonsArr;
 };
 
-export const updateLesson = async (updatedLesson: Lesson) => {
-  const lessonRef = doc(
-    db,
-    lessonsCollectionName,
-    updatedLesson.id
-  ).withConverter(lessonConverter);
+export const updateLesson = async (
+  id: string,
+  updatedLesson: Partial<Lesson>
+) => {
+  const lessonRef = doc(db, lessonsCollectionName, id).withConverter(
+    lessonConverter
+  );
 
   await setDoc(lessonRef, updatedLesson);
-  return updatedLesson;
+  return { id, changes: updatedLesson };
 };
 
 export const deleteLessonById = async (lessonId: string) => {

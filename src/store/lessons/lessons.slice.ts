@@ -1,14 +1,19 @@
 import {
   createAction,
   createAsyncThunk,
+  createSelector,
   createSlice,
+  EntityId,
   PayloadAction,
   Update
 } from '@reduxjs/toolkit';
-import { loadLessonsBetween } from 'dal/lessons.dal';
+import {
+  loadLessonsBetween,
+  updateLesson as dbUpdateLesson
+} from 'dal/lessons.dal';
 import Lesson from 'models/lesson';
 import { LoadStatus } from 'store/loadStatus';
-import { RootState } from 'store/store';
+import { RootState, store } from 'store/store';
 import { initialState, lessonsAdapter } from './lessons.model';
 
 export const loadLessons = createAsyncThunk<
@@ -33,6 +38,11 @@ export const createOrUpdateLesson = createAction<Lesson>(
   'lessons/createOrUpdateLesson'
 );
 
+export const updateLesson = createAsyncThunk(
+  'lessons/update',
+  (lesson: Lesson, thunkApi) => dbUpdateLesson(lesson.id, lesson)
+);
+
 const lessonsSlice = createSlice({
   name: 'lessons',
   initialState: initialState,
@@ -45,12 +55,6 @@ const lessonsSlice = createSlice({
     },
     addLessons: (state, action: PayloadAction<Lesson[]>) => {
       state.entitiesState = lessonsAdapter.addMany(
-        state.entitiesState,
-        action.payload
-      );
-    },
-    updateLesson: (state, action: PayloadAction<Update<Lesson>>) => {
-      state.entitiesState = lessonsAdapter.updateOne(
         state.entitiesState,
         action.payload
       );
@@ -92,14 +96,24 @@ const lessonsSlice = createSlice({
       .addCase(loadLessons.rejected, (state) => {
         state.status = LoadStatus.FAILED;
       });
+
+    builder.addCase(updateLesson.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
   }
 });
 
-export const { addLesson, addLessons, updateLesson, removeLesson } =
-  lessonsSlice.actions;
+export const { addLesson, addLessons, removeLesson } = lessonsSlice.actions;
 export const selectLessons = lessonsAdapter.getSelectors(
   (state: RootState) => state.lessons.entitiesState
 ).selectAll;
+export const selectLessonById = (id: EntityId) =>
+  lessonsAdapter
+    .getSelectors((state: RootState) => state.lessons.entitiesState)
+    .selectById(store.getState(), id);
 export const selectMinLessonsDate = (state: RootState) =>
   state.lessons.minLoadedDate;
 export const selectMaxLessonsDate = (state: RootState) =>
