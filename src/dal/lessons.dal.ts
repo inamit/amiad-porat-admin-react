@@ -1,6 +1,7 @@
 import { Update } from '@reduxjs/toolkit';
 import {
   addDoc,
+  arrayRemove,
   arrayUnion,
   collection,
   deleteDoc,
@@ -148,6 +149,28 @@ export const addStudentsToLesson = async (
     await getDoc(lessonToAdd.withConverter(lessonConverter))
   ).data();
 
+  return { id: lessonId, changes: updatedLesson };
+};
+
+export const changeStudentStatus = async (
+  lessonId: string,
+  studentId: string,
+  oldStatus: StudentStatus,
+  newStatus: string
+): Promise<Update<Lesson>> => {
+  const lesson = doc(db, lessonsCollectionName, lessonId).withConverter(
+    lessonConverter
+  );
+
+  await updateDoc(lesson, {
+    students: arrayRemove({ student: studentId, status: oldStatus })
+  });
+
+  await updateDoc(lesson, {
+    students: arrayUnion({ student: studentId, status: newStatus })
+  });
+
+  const updatedLesson = (await getDoc(lesson)).data();
   return { id: lessonId, changes: updatedLesson };
 };
 

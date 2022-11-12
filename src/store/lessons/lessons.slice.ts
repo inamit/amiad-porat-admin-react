@@ -9,8 +9,10 @@ import {
 import {
   addStudentsToLesson as dbAddStudentsToLesson,
   loadLessonsBetween,
-  updateLesson as dbUpdateLesson
+  updateLesson as dbUpdateLesson,
+  changeStudentStatus as dbChangeStudentStatus
 } from 'dal/lessons.dal';
+import StudentStatus from 'models/enums/studentStatus';
 import Lesson from 'models/lesson';
 import { LoadStatus } from 'store/loadStatus';
 import { RootState, store } from 'store/store';
@@ -48,6 +50,20 @@ export const addStudentsToLesson = createAsyncThunk<
   { lessonId: string; studentUids: string[] }
 >('lessons/addStudent', ({ lessonId, studentUids }, thunkApi) =>
   dbAddStudentsToLesson(lessonId, studentUids)
+);
+
+export const changeStudentStatus = createAsyncThunk<
+  Update<Lesson>,
+  {
+    lessonId: string;
+    studentUid: string;
+    oldStatus: StudentStatus;
+    newStatus: StudentStatus;
+  }
+>(
+  'lessons/changeStudentStatus',
+  ({ lessonId, studentUid, oldStatus, newStatus }) =>
+    dbChangeStudentStatus(lessonId, studentUid, oldStatus, newStatus)
 );
 
 const lessonsSlice = createSlice({
@@ -112,6 +128,13 @@ const lessonsSlice = createSlice({
     });
 
     builder.addCase(addStudentsToLesson.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(changeStudentStatus.fulfilled, (state, action) => {
       state.entitiesState = lessonsAdapter.updateOne(
         state.entitiesState,
         action.payload

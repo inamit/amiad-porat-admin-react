@@ -8,6 +8,7 @@ import RoomIcon from '@mui/icons-material/Room';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import DeleteIcon from '@mui/icons-material/Delete';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CardContent from '@mui/material/CardContent';
 import { AppointmentType } from 'models/enums/appointmentType';
 import { useAppDispatch, useAppSelector } from 'store/store';
@@ -15,12 +16,20 @@ import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import React from 'react';
 import {
   addStudentsToLesson,
+  changeStudentStatus,
   selectLessonById
 } from 'store/lessons/lessons.slice';
 import { selectUserByUid } from 'store/users/users.slice';
 import Grid from '@mui/material/Grid';
 import { formatDate } from 'devextreme/localization';
-import { Autocomplete, Chip, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Chip,
+  Menu,
+  MenuItem,
+  TextField,
+  Typography
+} from '@mui/material';
 import StudentStatus from 'models/enums/studentStatus';
 import Swal from 'sweetalert2';
 import { LoadingButton } from '@mui/lab';
@@ -37,6 +46,8 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
 
   const [addUserValue, setAddUserValue] = React.useState([]);
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [loadingFromStore, setLoadingFromStore] =
+    React.useState<boolean>(false);
 
   const getAppointmentName = () => {
     let type;
@@ -57,6 +68,35 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
     const user = selectUserByUid(lesson?.tutor?.uid);
 
     return user ? `${user.firstName ?? ''} ${user.lastName ?? ''}` : 'לא נבחר';
+  };
+
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [studentUid, setStudentUid] = React.useState<string>('');
+  const open = Boolean(anchorEl);
+  const handleClose = async (status?: StudentStatus) => {
+    if (Object.values(StudentStatus).includes(status)) {
+      setLoadingFromStore(true);
+      Swal.showLoading();
+      try {
+        await dispatch(
+          changeStudentStatus({
+            lessonId: lesson.id,
+            studentUid: studentUid,
+            oldStatus: StudentStatus.Canceled,
+            newStatus: status
+          })
+        );
+        Swal.hideLoading();
+        Swal.fire({
+          icon: 'success',
+          title: 'סטטוס התלמיד השתנה'
+        });
+        setLoadingFromStore(false);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    setAnchorEl(null);
   };
 
   return (
@@ -189,14 +229,39 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                   )
                   .map(({ student }) => {
                     const studentInfo = selectUserByUid(student.uid);
-                    console.log('scheduled student', studentInfo);
 
                     return (
                       <Chip
                         key={student.uid}
                         label={`${studentInfo.firstName} ${studentInfo.lastName}`}
-                        onDelete={() => {
-                          alert(`should remove ${student.uid}`);
+                        onDelete={async () => {
+                          const result = await Swal.fire({
+                            icon: 'warning',
+                            title: 'האם ברצונך לבטל לתלמיד את התגבור?',
+                            text: '*לא תישלח הודעה לתלמיד',
+                            confirmButtonText: 'כן',
+                            showCancelButton: true,
+                            cancelButtonText: 'לא'
+                          });
+
+                          if (result.isConfirmed) {
+                            setLoadingFromStore(true);
+                            Swal.showLoading();
+                            await dispatch(
+                              changeStudentStatus({
+                                lessonId: lesson.id,
+                                studentUid: student.uid,
+                                oldStatus: StudentStatus.Scheduled,
+                                newStatus: StudentStatus.Canceled
+                              })
+                            );
+                            Swal.hideLoading();
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'התגבור בוטל בעבור התלמיד'
+                            });
+                            setLoadingFromStore(false);
+                          }
                         }}
                       />
                     );
@@ -212,17 +277,54 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                   )
                   .map(({ student }) => {
                     const studentInfo = selectUserByUid(student.uid);
-                    console.log('scheduled student', studentInfo);
 
                     return (
                       <Chip
                         key={student.uid}
                         label={`${studentInfo.firstName} ${studentInfo.lastName}`}
+                        deleteIcon={<KeyboardArrowDownIcon />}
+                        onDelete={(e) => {
+                          setAnchorEl(e.currentTarget);
+                          setStudentUid(student.uid);
+                        }}
                       />
                     );
                   })}
               </Grid>
             </Grid>
+            <Menu
+              id="basic-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              MenuListProps={{
+                'aria-labelledby': 'basic-button'
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleClose(StudentStatus.Scheduled);
+                }}
+              >
+                קבע
+              </MenuItem>
+              <MenuItem
+                disabled
+                onClick={() => {
+                  //   handleClose(StudentStatus.Arrived);
+                }}
+              >
+                הגיע
+              </MenuItem>
+              <MenuItem
+                disabled
+                onClick={() => {
+                  //   handleClose(StudentStatus.Missed);
+                }}
+              >
+                לא הגיע
+              </MenuItem>
+            </Menu>
           </div>
         ) : (
           <div></div>
