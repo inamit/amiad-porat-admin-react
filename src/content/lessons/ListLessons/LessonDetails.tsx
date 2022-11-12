@@ -1,4 +1,3 @@
-import Avatar from '@mui/material/Avatar';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
@@ -8,23 +7,36 @@ import LockIcon from '@mui/icons-material/Lock';
 import RoomIcon from '@mui/icons-material/Room';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
+import DeleteIcon from '@mui/icons-material/Delete';
 import CardContent from '@mui/material/CardContent';
 import { AppointmentType } from 'models/enums/appointmentType';
-import { useAppSelector } from 'store/store';
+import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import React from 'react';
-import { selectLessonById } from 'store/lessons/lessons.slice';
+import {
+  addStudentsToLesson,
+  selectLessonById
+} from 'store/lessons/lessons.slice';
 import { selectUserByUid } from 'store/users/users.slice';
 import Grid from '@mui/material/Grid';
 import { formatDate } from 'devextreme/localization';
+import { Autocomplete, Chip, TextField, Typography } from '@mui/material';
+import StudentStatus from 'models/enums/studentStatus';
+import Swal from 'sweetalert2';
+import { LoadingButton } from '@mui/lab';
 
-const LessonDetails = ({ data, setIsLessonOpen }) => {
+const LessonDetails = ({ data, setIsLessonOpen, students }) => {
+  const dispatch = useAppDispatch();
+
   const subjects = useAppSelector(selectSubjects);
   const subject = subjects.find((subject) => subject.value === data.subject);
   const rooms = useAppSelector(selectRooms);
   const room = rooms.find((room) => room.value === data.roomId);
 
   const lesson = selectLessonById(data.id);
+
+  const [addUserValue, setAddUserValue] = React.useState([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
 
   const getAppointmentName = () => {
     let type;
@@ -72,9 +84,27 @@ const LessonDetails = ({ data, setIsLessonOpen }) => {
           )
         }
         action={
-          <IconButton aria-label="edit">
-            <EditIcon />
-          </IconButton>
+          data.type === AppointmentType.LESSON ? (
+            <div>
+              {/* <IconButton aria-label="edit">
+              <EditIcon sx={{ color: 'white' }} />
+            </IconButton> */}
+              <IconButton
+                aria-label="delete"
+                onClick={() => {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'האם ברצונך למחוק את התגבור?',
+                    text: 'תלמידים שקבעו לתגבור הזה לא יקבלו הודעה על הביטול.'
+                  });
+                }}
+              >
+                <DeleteIcon color="error" />
+              </IconButton>
+            </div>
+          ) : (
+            <div></div>
+          )
         }
         title={`${getAppointmentName()} | ${getTutor()}`}
       />
@@ -103,6 +133,100 @@ const LessonDetails = ({ data, setIsLessonOpen }) => {
             {formatDate(data.endDate, 'shortTime')}
           </Grid>
         </Grid>
+
+        {data.type === AppointmentType.LESSON ? (
+          <div>
+            <Grid container>
+              <Grid item xs={10} alignSelf="center">
+                <Autocomplete
+                  multiple
+                  onChange={(e, value) => {
+                    console.log(value);
+                    setAddUserValue(value);
+                  }}
+                  filterSelectedOptions
+                  value={addUserValue}
+                  options={students.filter(
+                    (student) =>
+                      !lesson?.students.find(
+                        (lessonStudent) =>
+                          lessonStudent.student.uid === student.id
+                      )
+                  )}
+                  renderInput={(params) => (
+                    <TextField {...params} label="הוספת תלמיד לתגבור" />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={2} textAlign="start" alignSelf="center">
+                <LoadingButton
+                  variant="contained"
+                  loading={loading}
+                  onClick={async () => {
+                    setLoading(true);
+                    await dispatch(
+                      addStudentsToLesson({
+                        lessonId: lesson?.id,
+                        studentUids: addUserValue.map((value) => value.id)
+                      })
+                    );
+                    setLoading(false);
+                    setAddUserValue([]);
+                  }}
+                >
+                  הוספה
+                </LoadingButton>
+              </Grid>
+            </Grid>
+            <Grid container paddingTop={2}>
+              <Grid item xs={2} alignSelf="center">
+                {<Typography variant="h3">קבעו:</Typography>}
+              </Grid>
+              <Grid item xs={10} textAlign="start" alignSelf="center">
+                {lesson?.students
+                  .filter(
+                    (student) => student.status === StudentStatus.Scheduled
+                  )
+                  .map(({ student }) => {
+                    const studentInfo = selectUserByUid(student.uid);
+                    console.log('scheduled student', studentInfo);
+
+                    return (
+                      <Chip
+                        key={student.uid}
+                        label={`${studentInfo.firstName} ${studentInfo.lastName}`}
+                        onDelete={() => {
+                          alert(`should remove ${student.uid}`);
+                        }}
+                      />
+                    );
+                  })}
+              </Grid>
+              <Grid item xs={2} alignSelf="center">
+                {<Typography variant="h3">ביטלו:</Typography>}
+              </Grid>
+              <Grid item xs={10} textAlign="start" alignSelf="center">
+                {lesson?.students
+                  .filter(
+                    (student) => student.status === StudentStatus.Canceled
+                  )
+                  .map(({ student }) => {
+                    const studentInfo = selectUserByUid(student.uid);
+                    console.log('scheduled student', studentInfo);
+
+                    return (
+                      <Chip
+                        key={student.uid}
+                        label={`${studentInfo.firstName} ${studentInfo.lastName}`}
+                      />
+                    );
+                  })}
+              </Grid>
+            </Grid>
+          </div>
+        ) : (
+          <div></div>
+        )}
       </CardContent>
     </Card>
   );

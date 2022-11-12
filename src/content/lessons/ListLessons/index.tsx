@@ -22,6 +22,7 @@ import Scheduler, {
 import {
   Appointment,
   AppointmentClickEvent,
+  AppointmentDblClickEvent,
   AppointmentFormOpeningEvent,
   AppointmentUpdatingEvent
 } from 'devextreme/ui/scheduler';
@@ -182,6 +183,12 @@ const ListLessons = (props) => {
         text: `${user.firstName} ${user.lastName}`
       };
     });
+  const students = useAppSelector(selectUsers)
+    .filter((user) => (user.role as unknown) === UserRoles.STUDENT.value)
+    .map((user) => ({
+      label: `${user.firstName} ${user.lastName}`,
+      id: user.uid
+    }));
   const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
@@ -279,7 +286,9 @@ const ListLessons = (props) => {
     scheduler.current.instance.endUpdate();
   };
 
-  const openLessonDetails = (e: AppointmentClickEvent) => {
+  const openLessonDetails = (
+    e: AppointmentClickEvent | AppointmentDblClickEvent
+  ) => {
     setSelectedLesson(e.appointmentData);
     setLessonDetailsOpen(true);
   };
@@ -303,6 +312,7 @@ const ListLessons = (props) => {
         onAppointmentFormOpening={onAppointmentFormOpening}
         onAppointmentUpdating={updateLessonFromScheduler}
         onAppointmentClick={openLessonDetails}
+        onAppointmentDblClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
         appointmentTooltipComponent={AppointmentTooltipWithProps}
@@ -372,12 +382,12 @@ const ListLessons = (props) => {
         fullWidth={true}
         onClose={() => {
           setLessonDetailsOpen(false);
-          setSelectedLesson({});
         }}
       >
         <LessonDetails
           data={selectedLesson}
           setIsLessonOpen={setIsLessonOpen}
+          students={students}
         />
       </Dialog>
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
