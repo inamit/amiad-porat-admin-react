@@ -1,6 +1,6 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
-import { selectSchedule, useAppDispatch, useAppSelector } from 'store/store';
+import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
@@ -19,7 +19,12 @@ import Scheduler, {
   Scrolling,
   View
 } from 'devextreme-react/scheduler';
-import { AppointmentFormOpeningEvent } from 'devextreme/ui/scheduler';
+import {
+  Appointment,
+  AppointmentClickEvent,
+  AppointmentFormOpeningEvent,
+  AppointmentUpdatingEvent
+} from 'devextreme/ui/scheduler';
 import AppointmentView from './AppointmentView';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
@@ -29,11 +34,16 @@ import OpenLessons from '../OpenLessons';
 import {
   createBulkLessons,
   loadLessons,
+  selectLessonById,
+  selectLessons,
   selectMaxLessonsDate,
-  selectMinLessonsDate
+  selectMinLessonsDate,
+  updateLesson
 } from 'store/lessons/lessons.slice';
 import AddLesson from '../AddLesson';
-import { selectUsers } from 'store/users/users.slice';
+import { selectUserByUid, selectUsers } from 'store/users/users.slice';
+import { selectGroups } from 'store/groups/groups.slice';
+import { AppointmentType } from 'models/enums/appointmentType';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute',
@@ -58,11 +68,85 @@ const ListLessons = (props) => {
     maxStudents?: number;
     subject?: string;
   }>({ date: new Date() });
+  const [selectedLesson, setSelectedLesson] = React.useState<Appointment>({});
+  const [lessonDetailsOpen, setLessonDetailsOpen] =
+    React.useState<boolean>(false);
   const [addLessonOpen, setAddLessonOpen] = React.useState<boolean>(false);
   const [addBulkLessonOpen, setAddBulkLessonOpen] =
     React.useState<boolean>(false);
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
-  const data = useAppSelector(selectSchedule);
+
+  const [data, setData] = React.useState([]);
+  const [mappedGroups, setMappedGroups] = React.useState([]);
+  const [mappedLessons, setMappedLessons] = React.useState([]);
+
+  const groups = useAppSelector(selectGroups);
+  const lessons = useAppSelector(selectLessons);
+
+  useEffect(() => {
+    setData([...mappedGroups, ...mappedLessons]);
+  }, [mappedGroups, mappedLessons]);
+
+  useEffect(() => {
+    setMappedGroups(
+      groups.map((group) => {
+        const today = new Date();
+
+        let day = 0;
+
+        if (today.getDay() === 7) {
+          day = today.getDate() + group.day;
+        } else if (group.day === 7) {
+          day = today.getDate() - today.getDay();
+        } else {
+          day = today.getDate() - (today.getDay() - group.day);
+        }
+        const [hour, minutes] = group.hour.split(':');
+        const startDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          day,
+          parseInt(hour),
+          parseInt(minutes)
+        );
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        const groupTeacher = selectUserByUid(group.teacher?.uid);
+
+        return {
+          text: group.name,
+          allDay: false,
+          startDate,
+          endDate,
+          recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
+          disabled: true,
+          tutorUid: group.teacher?.uid,
+          subject: group.subject,
+          type: AppointmentType.GROUP
+        };
+      })
+    );
+  }, [groups]);
+
+  useEffect(() => {
+    setMappedLessons(
+      lessons.map((lesson) => {
+        return {
+          id: lesson.id,
+          startDate: lesson.start,
+          endDate: lesson.end,
+          tutorUid: lesson.tutor?.uid,
+          roomId: lesson.room?.id,
+          subject: lesson.subject,
+          maxStudents: lesson.maxStudents,
+          isOpen: lesson.isOpen,
+          students: lesson.students,
+          type: AppointmentType.LESSON
+        };
+      })
+    );
+  }, [lessons]);
 
   const actions = [
     {
@@ -106,6 +190,24 @@ const ListLessons = (props) => {
     id: room.value,
     text: room.label
   }));
+
+  const getAppointmentName = (appointment) => {
+    let type;
+    const subject =
+      subjects.find((subject) => subject.id === appointment.subject)?.text ||
+      appointment.text;
+
+    switch (appointment.type) {
+      case AppointmentType.LESSON:
+        type = 'תגבור';
+        break;
+      case AppointmentType.GROUP:
+        type = 'שיעור';
+        break;
+    }
+
+    return `${type || ''} ${subject || ''}`;
+  };
 
   useEffect(() => {
     if (rooms.filter((room) => room.id === '').length === 0) {
@@ -152,12 +254,8 @@ const ListLessons = (props) => {
 
     updatedLessons
       .map((lesson) => {
-        const lessonTutor = tutors.find(
-          (tutor) => tutor.id === lesson.tutor?.uid
-        );
         return {
           id: lesson.id,
-          tutorName: `${lessonTutor?.text || 'לא נבחר מתרגל'}`,
           startDate: lesson.start,
           endDate: lesson.end,
           tutorUid: lesson.tutor.uid,
@@ -180,6 +278,29 @@ const ListLessons = (props) => {
     return <AppointmentTooltip {...props} scheduler={scheduler} />;
   });
 
+  const updateDraggedLesson = async (e: AppointmentUpdatingEvent) => {
+    scheduler.current.instance.beginUpdate();
+    const lesson = e.newData;
+
+    let updatedLesson = new Lesson(
+      lesson.id,
+      lesson.startDate,
+      lesson.isOpen,
+      { uid: lesson.tutorUid },
+      selectLessonById(lesson.id).students,
+      lesson.subject,
+      { id: lesson.roomId },
+      lesson.maxStudents
+    );
+    await dispatch(updateLesson(updatedLesson));
+    scheduler.current.instance.endUpdate();
+  };
+
+  const openLessonDetails = (e: AppointmentClickEvent) => {
+    setSelectedLesson(e.appointmentData);
+    setLessonDetailsOpen(true);
+  };
+
   return (
     <Paper>
       <Scheduler
@@ -189,6 +310,8 @@ const ListLessons = (props) => {
         endDayHour={21}
         defaultCurrentView="week"
         onAppointmentFormOpening={onAppointmentFormOpening}
+        onAppointmentUpdating={updateDraggedLesson}
+        onAppointmentClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
         appointmentTooltipComponent={AppointmentTooltipWithProps}
@@ -253,6 +376,16 @@ const ListLessons = (props) => {
         ))}
       </StyledSpeedDial>
 
+      <Dialog
+        open={lessonDetailsOpen}
+        onClose={() => {
+          setLessonDetailsOpen(false);
+          setSelectedLesson({});
+        }}
+      >
+        <DialogTitle>{getAppointmentName(selectedLesson)}</DialogTitle>
+        <DialogContent></DialogContent>
+      </Dialog>
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
         <DialogTitle>תגבור חדש</DialogTitle>
         <DialogContent>
