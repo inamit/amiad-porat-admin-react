@@ -10,7 +10,8 @@ import {
   addStudentsToLesson as dbAddStudentsToLesson,
   loadLessonsBetween,
   updateLesson as dbUpdateLesson,
-  changeStudentStatus as dbChangeStudentStatus
+  changeStudentStatus as dbChangeStudentStatus,
+  deleteLessonById as dbDeleteLessonById
 } from 'dal/lessons.dal';
 import StudentStatus from 'models/enums/studentStatus';
 import Lesson from 'models/lesson';
@@ -64,6 +65,11 @@ export const changeStudentStatus = createAsyncThunk<
   'lessons/changeStudentStatus',
   ({ lessonId, studentUid, oldStatus, newStatus }) =>
     dbChangeStudentStatus(lessonId, studentUid, oldStatus, newStatus)
+);
+
+export const deleteLessonById = createAsyncThunk<string, { lessonId: string }>(
+  'lessons/delete',
+  ({ lessonId }) => dbDeleteLessonById(lessonId)
 );
 
 const lessonsSlice = createSlice({
@@ -136,6 +142,13 @@ const lessonsSlice = createSlice({
 
     builder.addCase(changeStudentStatus.fulfilled, (state, action) => {
       state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(deleteLessonById.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.removeOne(
         state.entitiesState,
         action.payload
       );

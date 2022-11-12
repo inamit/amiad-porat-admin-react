@@ -174,8 +174,9 @@ export const changeStudentStatus = async (
   return { id: lessonId, changes: updatedLesson };
 };
 
-export const deleteLessonById = async (lessonId: string) => {
+export const deleteLessonById = async (lessonId: string): Promise<string> => {
   await deleteDoc(doc(db, lessonsCollectionName, lessonId));
+  return lessonId;
 };
 
 export const getLessonsToOpen = async (

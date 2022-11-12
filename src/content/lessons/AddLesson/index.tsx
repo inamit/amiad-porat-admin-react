@@ -4,8 +4,9 @@ import GenericFormFields, {
   areFieldsValid
 } from 'components/GenericFormFields';
 import { isRoomAvailable, isTutorAvailable } from 'dal/lessons.dal';
+import { Scheduler } from 'devextreme-react';
 import Lesson from 'models/lesson';
-import React, { useEffect } from 'react';
+import React, { MutableRefObject, useEffect } from 'react';
 import { createOrUpdateLesson } from 'store/lessons/lessons.slice';
 import { useAppDispatch } from 'store/store';
 import Swal from 'sweetalert2';
@@ -54,6 +55,9 @@ const AddLesson = (props) => {
   }, [lesson]);
 
   const addLesson = async () => {
+    (
+      props.scheduler as MutableRefObject<Scheduler>
+    ).current.instance.beginUpdate();
     setLoading(true);
     const lessonObj = new Lesson(
       lesson.id ?? '',
@@ -82,6 +86,9 @@ const AddLesson = (props) => {
 
     setLoading(false);
     props.addLessonCallback(available);
+    (
+      props.scheduler as MutableRefObject<Scheduler>
+    ).current.instance.endUpdate();
   };
 
   const validateTutorAvailability = async (lesson: Lesson) => {

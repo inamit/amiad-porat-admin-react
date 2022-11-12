@@ -13,10 +13,11 @@ import CardContent from '@mui/material/CardContent';
 import { AppointmentType } from 'models/enums/appointmentType';
 import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 import {
   addStudentsToLesson,
   changeStudentStatus,
+  deleteLessonById,
   selectLessonById
 } from 'store/lessons/lessons.slice';
 import { selectUserByUid } from 'store/users/users.slice';
@@ -33,8 +34,15 @@ import {
 import StudentStatus from 'models/enums/studentStatus';
 import Swal from 'sweetalert2';
 import { LoadingButton } from '@mui/lab';
+import { Scheduler } from 'devextreme-react';
 
-const LessonDetails = ({ data, setIsLessonOpen, students }) => {
+const LessonDetails = ({
+  data,
+  scheduler,
+  setIsLessonOpen,
+  students,
+  close
+}) => {
   const dispatch = useAppDispatch();
 
   const subjects = useAppSelector(selectSubjects);
@@ -74,6 +82,8 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
   const [studentUid, setStudentUid] = React.useState<string>('');
   const open = Boolean(anchorEl);
   const handleClose = async (status?: StudentStatus) => {
+    (scheduler as MutableRefObject<Scheduler>).current.instance.beginUpdate();
+
     if (Object.values(StudentStatus).includes(status)) {
       setLoadingFromStore(true);
       Swal.showLoading();
@@ -97,6 +107,7 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
       }
     }
     setAnchorEl(null);
+    (scheduler as MutableRefObject<Scheduler>).current.instance.endUpdate();
   };
 
   return (
@@ -131,12 +142,26 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
             </IconButton> */}
               <IconButton
                 aria-label="delete"
-                onClick={() => {
-                  Swal.fire({
+                onClick={async () => {
+                  const result = await Swal.fire({
                     icon: 'warning',
                     title: 'האם ברצונך למחוק את התגבור?',
-                    text: 'תלמידים שקבעו לתגבור הזה לא יקבלו הודעה על הביטול.'
+                    text: 'תלמידים שקבעו לתגבור הזה לא יקבלו הודעה על הביטול.',
+                    confirmButtonText: 'כן',
+                    showCancelButton: true,
+                    cancelButtonText: 'לא'
                   });
+
+                  if (result.isConfirmed) {
+                    (
+                      scheduler as MutableRefObject<Scheduler>
+                    ).current.instance.beginUpdate();
+                    await dispatch(deleteLessonById({ lessonId: lesson?.id }));
+                    close();
+                    (
+                      scheduler as MutableRefObject<Scheduler>
+                    ).current.instance.endUpdate();
+                  }
                 }}
               >
                 <DeleteIcon color="error" />
@@ -181,7 +206,6 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                 <Autocomplete
                   multiple
                   onChange={(e, value) => {
-                    console.log(value);
                     setAddUserValue(value);
                   }}
                   filterSelectedOptions
@@ -203,6 +227,9 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                   variant="contained"
                   loading={loading}
                   onClick={async () => {
+                    (
+                      scheduler as MutableRefObject<Scheduler>
+                    ).current.instance.beginUpdate();
                     setLoading(true);
                     await dispatch(
                       addStudentsToLesson({
@@ -212,6 +239,9 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                     );
                     setLoading(false);
                     setAddUserValue([]);
+                    (
+                      scheduler as MutableRefObject<Scheduler>
+                    ).current.instance.endUpdate();
                   }}
                 >
                   הוספה
@@ -235,6 +265,10 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                         key={student.uid}
                         label={`${studentInfo.firstName} ${studentInfo.lastName}`}
                         onDelete={async () => {
+                          (
+                            scheduler as MutableRefObject<Scheduler>
+                          ).current.instance.beginUpdate();
+
                           const result = await Swal.fire({
                             icon: 'warning',
                             title: 'האם ברצונך לבטל לתלמיד את התגבור?',
@@ -261,6 +295,9 @@ const LessonDetails = ({ data, setIsLessonOpen, students }) => {
                               title: 'התגבור בוטל בעבור התלמיד'
                             });
                             setLoadingFromStore(false);
+                            (
+                              scheduler as MutableRefObject<Scheduler>
+                            ).current.instance.endUpdate();
                           }
                         }}
                       />

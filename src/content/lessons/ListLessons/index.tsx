@@ -301,6 +301,10 @@ const ListLessons = (props) => {
     setLessonDetailsOpen(false);
   };
 
+  const closeDetails = () => {
+    setLessonDetailsOpen(false);
+  };
+
   return (
     <Paper>
       <Scheduler
@@ -386,8 +390,10 @@ const ListLessons = (props) => {
       >
         <LessonDetails
           data={selectedLesson}
+          scheduler={scheduler}
           setIsLessonOpen={setIsLessonOpen}
           students={students}
+          close={closeDetails}
         />
       </Dialog>
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
@@ -395,6 +401,7 @@ const ListLessons = (props) => {
         <DialogContent>
           <AddLesson
             {...addLessonProps}
+            scheduler={scheduler}
             addLessonCallback={addLessonCallback}
           />
         </DialogContent>
