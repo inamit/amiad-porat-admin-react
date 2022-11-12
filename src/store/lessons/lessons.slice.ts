@@ -2,13 +2,21 @@ import {
   createAction,
   createAsyncThunk,
   createSlice,
+  EntityId,
   PayloadAction,
   Update
 } from '@reduxjs/toolkit';
-import { loadLessonsBetween } from 'dal/lessons.dal';
+import {
+  addStudentsToLesson as dbAddStudentsToLesson,
+  loadLessonsBetween,
+  updateLesson as dbUpdateLesson,
+  changeStudentStatus as dbChangeStudentStatus,
+  deleteLessonById as dbDeleteLessonById
+} from 'dal/lessons.dal';
+import StudentStatus from 'models/enums/studentStatus';
 import Lesson from 'models/lesson';
 import { LoadStatus } from 'store/loadStatus';
-import { RootState } from 'store/store';
+import { RootState, store } from 'store/store';
 import { initialState, lessonsAdapter } from './lessons.model';
 
 export const loadLessons = createAsyncThunk<
@@ -33,6 +41,37 @@ export const createOrUpdateLesson = createAction<Lesson>(
   'lessons/createOrUpdateLesson'
 );
 
+export const updateLesson = createAsyncThunk(
+  'lessons/update',
+  (lesson: Lesson, thunkApi) => dbUpdateLesson(lesson.id, lesson)
+);
+
+export const addStudentsToLesson = createAsyncThunk<
+  Update<Lesson>,
+  { lessonId: string; studentUids: string[] }
+>('lessons/addStudent', ({ lessonId, studentUids }, thunkApi) =>
+  dbAddStudentsToLesson(lessonId, studentUids)
+);
+
+export const changeStudentStatus = createAsyncThunk<
+  Update<Lesson>,
+  {
+    lessonId: string;
+    studentUid: string;
+    oldStatus: StudentStatus;
+    newStatus: StudentStatus;
+  }
+>(
+  'lessons/changeStudentStatus',
+  ({ lessonId, studentUid, oldStatus, newStatus }) =>
+    dbChangeStudentStatus(lessonId, studentUid, oldStatus, newStatus)
+);
+
+export const deleteLessonById = createAsyncThunk<string, { lessonId: string }>(
+  'lessons/delete',
+  ({ lessonId }) => dbDeleteLessonById(lessonId)
+);
+
 const lessonsSlice = createSlice({
   name: 'lessons',
   initialState: initialState,
@@ -45,12 +84,6 @@ const lessonsSlice = createSlice({
     },
     addLessons: (state, action: PayloadAction<Lesson[]>) => {
       state.entitiesState = lessonsAdapter.addMany(
-        state.entitiesState,
-        action.payload
-      );
-    },
-    updateLesson: (state, action: PayloadAction<Update<Lesson>>) => {
-      state.entitiesState = lessonsAdapter.updateOne(
         state.entitiesState,
         action.payload
       );
@@ -92,14 +125,45 @@ const lessonsSlice = createSlice({
       .addCase(loadLessons.rejected, (state) => {
         state.status = LoadStatus.FAILED;
       });
+
+    builder.addCase(updateLesson.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(addStudentsToLesson.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(changeStudentStatus.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.updateOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
+
+    builder.addCase(deleteLessonById.fulfilled, (state, action) => {
+      state.entitiesState = lessonsAdapter.removeOne(
+        state.entitiesState,
+        action.payload
+      );
+    });
   }
 });
 
-export const { addLesson, addLessons, updateLesson, removeLesson } =
-  lessonsSlice.actions;
+export const { addLesson, addLessons, removeLesson } = lessonsSlice.actions;
 export const selectLessons = lessonsAdapter.getSelectors(
   (state: RootState) => state.lessons.entitiesState
 ).selectAll;
+export const selectLessonById = (id: EntityId) =>
+  lessonsAdapter
+    .getSelectors((state: RootState) => state.lessons.entitiesState)
+    .selectById(store.getState(), id);
 export const selectMinLessonsDate = (state: RootState) =>
   state.lessons.minLoadedDate;
 export const selectMaxLessonsDate = (state: RootState) =>

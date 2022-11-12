@@ -6,20 +6,28 @@ import { useAppSelector } from 'store/store';
 
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
+import { AppointmentType } from 'models/enums/appointmentType';
+import { selectUserByUid } from 'store/users/users.slice';
 
 const AppointmentView = (props) => {
   const subjects = useAppSelector(selectSubjects);
   const { targetedAppointmentData } = props.data;
 
-  const tutor =
-    targetedAppointmentData.tutorName !== undefined
-      ? `${targetedAppointmentData.type === 'group' ? 'מורה:' : 'מתרגל:'} ${
-          targetedAppointmentData.tutorName
-        }`
-      : '';
+  const getTutorName = (targetedAppointmentData) => {
+    if (targetedAppointmentData.tutorUid === undefined) {
+      return '';
+    }
+
+    const user = selectUserByUid(targetedAppointmentData.tutorUid);
+    return `${
+      targetedAppointmentData.type === AppointmentType.GROUP
+        ? 'מורה:'
+        : 'מתרגל:'
+    } ${user.firstName} ${user.lastName}`;
+  };
 
   return (
-    <Tooltip title={tutor} arrow>
+    <Tooltip title={getTutorName(targetedAppointmentData)} arrow>
       <div>
         {targetedAppointmentData.isOpen !== undefined ? (
           <div style={{ position: 'absolute', left: '5px' }}>
@@ -37,7 +45,7 @@ const AppointmentView = (props) => {
             (subject) => subject.value === targetedAppointmentData.subject
           )?.label || targetedAppointmentData.text}
         </div>
-        <div>{tutor}</div>
+        <div>{getTutorName(targetedAppointmentData)}</div>
         <div>
           {targetedAppointmentData.students?.length !== undefined
             ? `${

@@ -2,6 +2,7 @@ import {
   createAction,
   createAsyncThunk,
   createSlice,
+  EntityId,
   PayloadAction,
   Update
 } from '@reduxjs/toolkit';
@@ -9,7 +10,7 @@ import { AddUserForm } from 'content/users/AddUser/userFormModel';
 import { getAllUsers } from 'dal/users.dal';
 import User from 'models/user';
 import { LoadStatus } from 'store/loadStatus';
-import { RootState } from 'store/store';
+import { RootState, store } from 'store/store';
 import { initialState, usersAdapter } from './users.model';
 
 export const loadUsers = createAsyncThunk('users/load', () => getAllUsers());
@@ -68,5 +69,9 @@ export const { addUser, addUsers, updateUser, removeUser } = usersSlice.actions;
 export const selectUsers = usersAdapter.getSelectors(
   (state: RootState) => state.users.entitiesState
 ).selectAll;
+export const selectUserByUid = (id: EntityId) =>
+  usersAdapter
+    .getSelectors((state: RootState) => state.users.entitiesState)
+    .selectById(store.getState(), id);
 export const selectUsersLoadStatus = (state: RootState) => state.users.status;
 export const usersReducer = usersSlice.reducer;

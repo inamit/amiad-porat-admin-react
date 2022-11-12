@@ -1,6 +1,6 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
-import { selectSchedule, useAppDispatch, useAppSelector } from 'store/store';
+import { useAppDispatch, useAppSelector } from 'store/store';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
@@ -19,7 +19,13 @@ import Scheduler, {
   Scrolling,
   View
 } from 'devextreme-react/scheduler';
-import { AppointmentFormOpeningEvent } from 'devextreme/ui/scheduler';
+import {
+  Appointment,
+  AppointmentClickEvent,
+  AppointmentDblClickEvent,
+  AppointmentFormOpeningEvent,
+  AppointmentUpdatingEvent
+} from 'devextreme/ui/scheduler';
 import AppointmentView from './AppointmentView';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
@@ -29,11 +35,17 @@ import OpenLessons from '../OpenLessons';
 import {
   createBulkLessons,
   loadLessons,
+  selectLessonById,
+  selectLessons,
   selectMaxLessonsDate,
-  selectMinLessonsDate
+  selectMinLessonsDate,
+  updateLesson
 } from 'store/lessons/lessons.slice';
 import AddLesson from '../AddLesson';
-import { selectUsers } from 'store/users/users.slice';
+import { selectUserByUid, selectUsers } from 'store/users/users.slice';
+import { selectGroups } from 'store/groups/groups.slice';
+import { AppointmentType } from 'models/enums/appointmentType';
+import LessonDetails from './LessonDetails';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute',
@@ -55,12 +67,88 @@ const ListLessons = (props) => {
     date?: string | Date;
     tutorUid?: string;
     roomId?: string;
+    maxStudents?: number;
+    subject?: string;
   }>({ date: new Date() });
+  const [selectedLesson, setSelectedLesson] = React.useState<Appointment>({});
+  const [lessonDetailsOpen, setLessonDetailsOpen] =
+    React.useState<boolean>(false);
   const [addLessonOpen, setAddLessonOpen] = React.useState<boolean>(false);
   const [addBulkLessonOpen, setAddBulkLessonOpen] =
     React.useState<boolean>(false);
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
-  const data = useAppSelector(selectSchedule);
+
+  const [data, setData] = React.useState([]);
+  const [mappedGroups, setMappedGroups] = React.useState([]);
+  const [mappedLessons, setMappedLessons] = React.useState([]);
+
+  const groups = useAppSelector(selectGroups);
+  const lessons = useAppSelector(selectLessons);
+
+  useEffect(() => {
+    setData([...mappedGroups, ...mappedLessons]);
+  }, [mappedGroups, mappedLessons]);
+
+  useEffect(() => {
+    setMappedGroups(
+      groups.map((group) => {
+        const today = new Date();
+
+        let day = 0;
+
+        if (today.getDay() === 7) {
+          day = today.getDate() + group.day;
+        } else if (group.day === 7) {
+          day = today.getDate() - today.getDay();
+        } else {
+          day = today.getDate() - (today.getDay() - group.day);
+        }
+        const [hour, minutes] = group.hour.split(':');
+        const startDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          day,
+          parseInt(hour),
+          parseInt(minutes)
+        );
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        const groupTeacher = selectUserByUid(group.teacher?.uid);
+
+        return {
+          text: group.name,
+          allDay: false,
+          startDate,
+          endDate,
+          recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
+          disabled: true,
+          tutorUid: group.teacher?.uid,
+          subject: group.subject,
+          type: AppointmentType.GROUP
+        };
+      })
+    );
+  }, [groups]);
+
+  useEffect(() => {
+    setMappedLessons(
+      lessons.map((lesson) => {
+        return {
+          id: lesson.id,
+          startDate: lesson.start,
+          endDate: lesson.end,
+          tutorUid: lesson.tutor?.uid,
+          roomId: lesson.room?.id,
+          subject: lesson.subject,
+          maxStudents: lesson.maxStudents,
+          isOpen: lesson.isOpen,
+          students: lesson.students,
+          type: AppointmentType.LESSON
+        };
+      })
+    );
+  }, [lessons]);
 
   const actions = [
     {
@@ -95,6 +183,12 @@ const ListLessons = (props) => {
         text: `${user.firstName} ${user.lastName}`
       };
     });
+  const students = useAppSelector(selectUsers)
+    .filter((user) => (user.role as unknown) === UserRoles.STUDENT.value)
+    .map((user) => ({
+      label: `${user.firstName} ${user.lastName}`,
+      id: user.uid
+    }));
   const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
@@ -117,9 +211,17 @@ const ListLessons = (props) => {
   }, [tutors]);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
-    let { startDate, tutorUid, roomId, id } = e.appointmentData;
+    let { startDate, tutorUid, roomId, id, maxStudents, subject } =
+      e.appointmentData;
     e.cancel = true;
-    setAddLessonProps({ id, date: startDate, tutorUid, roomId });
+    setAddLessonProps({
+      id,
+      date: startDate,
+      tutorUid,
+      roomId,
+      maxStudents,
+      subject
+    });
     setAddLessonOpen(true);
   };
 
@@ -142,12 +244,8 @@ const ListLessons = (props) => {
 
     updatedLessons
       .map((lesson) => {
-        const lessonTutor = tutors.find(
-          (tutor) => tutor.id === lesson.tutor?.uid
-        );
         return {
           id: lesson.id,
-          tutorName: `${lessonTutor?.text || 'לא נבחר מתרגל'}`,
           startDate: lesson.start,
           endDate: lesson.end,
           tutorUid: lesson.tutor.uid,
@@ -170,6 +268,43 @@ const ListLessons = (props) => {
     return <AppointmentTooltip {...props} scheduler={scheduler} />;
   });
 
+  const updateLessonFromScheduler = async (e: AppointmentUpdatingEvent) => {
+    scheduler.current.instance.beginUpdate();
+    const lesson = e.newData;
+
+    let updatedLesson = new Lesson(
+      lesson.id,
+      lesson.startDate,
+      lesson.isOpen,
+      { uid: lesson.tutorUid },
+      selectLessonById(lesson.id).students,
+      lesson.subject,
+      { id: lesson.roomId },
+      lesson.maxStudents
+    );
+    await dispatch(updateLesson(updatedLesson));
+    scheduler.current.instance.endUpdate();
+  };
+
+  const openLessonDetails = (
+    e: AppointmentClickEvent | AppointmentDblClickEvent
+  ) => {
+    setSelectedLesson(e.appointmentData);
+    setLessonDetailsOpen(true);
+  };
+
+  const setIsLessonOpen = (isOpen: boolean) => {
+    scheduler.current.instance.updateAppointment(selectedLesson, {
+      ...selectedLesson,
+      isOpen
+    });
+    setLessonDetailsOpen(false);
+  };
+
+  const closeDetails = () => {
+    setLessonDetailsOpen(false);
+  };
+
   return (
     <Paper>
       <Scheduler
@@ -179,6 +314,9 @@ const ListLessons = (props) => {
         endDayHour={21}
         defaultCurrentView="week"
         onAppointmentFormOpening={onAppointmentFormOpening}
+        onAppointmentUpdating={updateLessonFromScheduler}
+        onAppointmentClick={openLessonDetails}
+        onAppointmentDblClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
         appointmentTooltipComponent={AppointmentTooltipWithProps}
@@ -243,11 +381,27 @@ const ListLessons = (props) => {
         ))}
       </StyledSpeedDial>
 
+      <Dialog
+        open={lessonDetailsOpen}
+        fullWidth={true}
+        onClose={() => {
+          setLessonDetailsOpen(false);
+        }}
+      >
+        <LessonDetails
+          data={selectedLesson}
+          scheduler={scheduler}
+          setIsLessonOpen={setIsLessonOpen}
+          students={students}
+          close={closeDetails}
+        />
+      </Dialog>
       <Dialog open={addLessonOpen} onClose={() => setAddLessonOpen(false)}>
         <DialogTitle>תגבור חדש</DialogTitle>
         <DialogContent>
           <AddLesson
             {...addLessonProps}
+            scheduler={scheduler}
             addLessonCallback={addLessonCallback}
           />
         </DialogContent>

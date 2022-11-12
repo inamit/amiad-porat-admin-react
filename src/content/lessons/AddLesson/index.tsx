@@ -4,8 +4,9 @@ import GenericFormFields, {
   areFieldsValid
 } from 'components/GenericFormFields';
 import { isRoomAvailable, isTutorAvailable } from 'dal/lessons.dal';
+import { Scheduler } from 'devextreme-react';
 import Lesson from 'models/lesson';
-import React, { useEffect } from 'react';
+import React, { MutableRefObject, useEffect } from 'react';
 import { createOrUpdateLesson } from 'store/lessons/lessons.slice';
 import { useAppDispatch } from 'store/store';
 import Swal from 'sweetalert2';
@@ -32,10 +33,10 @@ const AddLesson = (props) => {
     id: props.id,
     date: props.date ?? new Date(),
     hour: props.date,
-    subject: 'math',
+    subject: props.subject ?? 'math',
     teacher: props.tutorUid ?? '',
     room: props.roomId ?? '',
-    maxStudents: 5
+    maxStudents: props.maxStudents ?? 5
   });
   const [validationErrors, setValidationErrors] = React.useState<{
     [key: string]: string;
@@ -54,6 +55,9 @@ const AddLesson = (props) => {
   }, [lesson]);
 
   const addLesson = async () => {
+    (
+      props.scheduler as MutableRefObject<Scheduler>
+    ).current.instance.beginUpdate();
     setLoading(true);
     const lessonObj = new Lesson(
       lesson.id ?? '',
@@ -70,7 +74,9 @@ const AddLesson = (props) => {
       [],
       lesson.subject,
       { id: lesson.room },
-      lesson.maxStudents
+      typeof lesson.maxStudents === 'string'
+        ? parseInt(lesson.maxStudents)
+        : lesson.maxStudents
     );
     const available = await validateAvailability(lessonObj);
 
@@ -80,6 +86,9 @@ const AddLesson = (props) => {
 
     setLoading(false);
     props.addLessonCallback(available);
+    (
+      props.scheduler as MutableRefObject<Scheduler>
+    ).current.instance.endUpdate();
   };
 
   const validateTutorAvailability = async (lesson: Lesson) => {
