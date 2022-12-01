@@ -51,16 +51,18 @@ const AddBulkLessons = (props) => {
             0
           );
 
-          const newLesson = new Lesson(
-            '',
-            startDate,
-            false,
-            { uid: '' },
-            [],
-            lesson.subject,
-            { id: '' },
-            5
-          );
+          const newLesson: Lesson = {
+            id: '',
+            start: startDate,
+            end: undefined,
+            isOpen: false,
+            tutor: { uid: '' },
+            students: [],
+            subject: lesson.subject,
+            room: { id: '' },
+            maxStudents: 5
+          };
+
           addedLessons.push(newLesson);
 
           currentHour.setHours(currentHour.getHours() + 1);

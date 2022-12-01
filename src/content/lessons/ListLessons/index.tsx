@@ -252,16 +252,17 @@ const ListLessons = (props) => {
     scheduler.current.instance.beginUpdate();
     const lesson = e.newData;
 
-    let updatedLesson = new Lesson(
-      lesson.id,
-      lesson.startDate,
-      lesson.isOpen,
-      { uid: lesson.tutorUid },
-      selectLessonById(lesson.id).students,
-      lesson.subject,
-      { id: lesson.roomId },
-      lesson.maxStudents
-    );
+    let updatedLesson: Lesson = {
+      id: lesson.id,
+      start: lesson.startDate,
+      end: lesson.endDate,
+      isOpen: lesson.isOpen,
+      tutor: { uid: lesson.tutorUid },
+      students: selectLessonById(lesson.id).students,
+      subject: lesson.subject,
+      room: { id: lesson.roomId },
+      maxStudents: lesson.maxStudents
+    };
     await dispatch(updateLesson(updatedLesson));
     scheduler.current.instance.endUpdate();
   };
