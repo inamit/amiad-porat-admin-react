@@ -53,7 +53,7 @@ const AppointmentView = (props) => {
         <div>
           {targetedAppointmentData.students?.length !== undefined
             ? `${
-                targetedAppointmentData.students.map(
+                targetedAppointmentData.students.filter(
                   (value) => value.status === StudentStatus.Scheduled
                 ).length
               } תלמידים`

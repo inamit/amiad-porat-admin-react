@@ -35,6 +35,7 @@ import StudentStatus from 'models/enums/studentStatus';
 import Swal from 'sweetalert2';
 import { LoadingButton } from '@mui/lab';
 import { Scheduler } from 'devextreme-react';
+import withReactContent from 'sweetalert2-react-content';
 
 const LessonDetails = ({
   data,
@@ -43,6 +44,7 @@ const LessonDetails = ({
   students,
   close
 }) => {
+  const MySwal = withReactContent(Swal);
   const dispatch = useAppDispatch();
 
   const subjects = useAppSelector(selectSubjects);
@@ -86,7 +88,7 @@ const LessonDetails = ({
 
     if (Object.values(StudentStatus).includes(status)) {
       setLoadingFromStore(true);
-      Swal.showLoading();
+      MySwal.showLoading();
       try {
         await dispatch(
           changeStudentStatus({
@@ -96,8 +98,8 @@ const LessonDetails = ({
             newStatus: status
           })
         );
-        Swal.hideLoading();
-        Swal.fire({
+        MySwal.hideLoading();
+        MySwal.fire({
           icon: 'success',
           title: 'סטטוס התלמיד השתנה'
         });
@@ -117,7 +119,38 @@ const LessonDetails = ({
         avatar={
           data.isOpen !== undefined ? (
             <IconButton
-              onClick={(e) => {
+              onClick={async (e) => {
+                if (!lesson.tutor?.uid) {
+                  const result = await MySwal.fire({
+                    icon: 'warning',
+                    title: 'שים לב!',
+                    text: 'לא שובץ מתרגל לתגבור. האם אתה בטוח שברצונך לפתוח אותו?',
+                    confirmButtonText: 'כן',
+                    showCancelButton: true,
+                    cancelButtonText: 'לא',
+                    allowOutsideClick: false
+                  });
+
+                  if (result.isDismissed) {
+                    return false;
+                  }
+                }
+
+                if (!lesson.room?.id) {
+                  const result = await MySwal.fire({
+                    icon: 'warning',
+                    title: 'שים לב!',
+                    text: 'לא שובץ חדר לתרגול. האם אתה בטוח שברצונך לפתוח אותו?',
+                    confirmButtonText: 'כן',
+                    showCancelButton: true,
+                    cancelButtonText: 'לא',
+                    allowOutsideClick: false
+                  });
+
+                  if (result.isDismissed) {
+                    return false;
+                  }
+                }
                 setIsLessonOpen(!data.isOpen);
               }}
               sx={{
@@ -143,7 +176,7 @@ const LessonDetails = ({
               <IconButton
                 aria-label="delete"
                 onClick={async () => {
-                  const result = await Swal.fire({
+                  const result = await MySwal.fire({
                     icon: 'warning',
                     title: 'האם ברצונך למחוק את התגבור?',
                     text: 'תלמידים שקבעו לתגבור הזה לא יקבלו הודעה על הביטול.',
@@ -279,7 +312,7 @@ const LessonDetails = ({
                             scheduler as MutableRefObject<Scheduler>
                           ).current.instance.beginUpdate();
 
-                          const result = await Swal.fire({
+                          const result = await MySwal.fire({
                             icon: 'warning',
                             title: 'האם ברצונך לבטל לתלמיד את התגבור?',
                             text: '*לא תישלח הודעה לתלמיד',
@@ -290,7 +323,7 @@ const LessonDetails = ({
 
                           if (result.isConfirmed) {
                             setLoadingFromStore(true);
-                            Swal.showLoading();
+                            MySwal.showLoading();
                             await dispatch(
                               changeStudentStatus({
                                 lessonId: lesson.id,
@@ -299,8 +332,8 @@ const LessonDetails = ({
                                 newStatus: StudentStatus.Canceled
                               })
                             );
-                            Swal.hideLoading();
-                            Swal.fire({
+                            MySwal.hideLoading();
+                            MySwal.fire({
                               icon: 'success',
                               title: 'התגבור בוטל בעבור התלמיד'
                             });
