@@ -1,6 +1,7 @@
 import {
   createAction,
   createAsyncThunk,
+  createSelector,
   createSlice,
   EntityId,
   PayloadAction,
@@ -73,5 +74,25 @@ export const selectUserByUid = (id: EntityId) =>
   usersAdapter
     .getSelectors((state: RootState) => state.users.entitiesState)
     .selectById(store.getState(), id);
+export const selectUsersGreaterThanRoleForScheduler = (userRole: number) =>
+  createSelector(selectUsers, (state) =>
+    mapToScheduler(state.filter((user) => (user.role as unknown) >= userRole))
+  );
+export const selectUsersByRoleForScheduler = (userRole: number) =>
+  createSelector(selectUsers, (state) =>
+    mapToScheduler(state.filter((user) => (user.role as unknown) === userRole))
+  );
 export const selectUsersLoadStatus = (state: RootState) => state.users.status;
 export const usersReducer = usersSlice.reducer;
+
+const mapToScheduler = (users: User[]) => {
+  return [
+    ...users.map((user) => {
+      return {
+        id: user.uid,
+        text: `${user.firstName} ${user.lastName}`
+      };
+    }),
+    { id: '', text: 'לא נבחר' }
+  ];
+};
