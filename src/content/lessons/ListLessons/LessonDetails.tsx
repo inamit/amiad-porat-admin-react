@@ -201,6 +201,15 @@ const LessonDetails = ({
 
         {data.type === AppointmentType.LESSON ? (
           <div>
+            <Typography variant="h3">
+              תלמידים (
+              {
+                lesson.students.filter(
+                  (student) => student.status === StudentStatus.Scheduled
+                ).length
+              }
+              /{lesson.maxStudents})
+            </Typography>
             <Grid container>
               <Grid item xs={10} alignSelf="center">
                 <Autocomplete
