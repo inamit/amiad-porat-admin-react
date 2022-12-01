@@ -45,7 +45,7 @@ export const addLessonFields: FormFieldType[] = [
     icon: PersonOutlinedIcon,
     type: FieldType.STORE_SELECT,
     select: selectUsers,
-    filter: (user: User) => (user.role as unknown) >= UserRoles.TUTOR.value,
+    filter: (user: User) => user.role >= UserRoles.TUTOR.value,
     map: (user: User) => ({
       value: user.uid,
       label: `${user.firstName} ${user.lastName}`

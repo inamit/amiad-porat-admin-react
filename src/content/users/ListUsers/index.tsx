@@ -479,8 +479,7 @@ const ListUsers = () => {
         type: 'singleSelect',
         valueOptions: (params) => {
           return params.row?.role
-            ? (params.row?.role as unknown as number) ===
-              UserRoles.STUDENT.value
+            ? params.row?.role === UserRoles.STUDENT.value
               ? grades
               : []
             : grades;
@@ -518,8 +517,7 @@ const ListUsers = () => {
         width: 100,
         align: 'center',
         renderCell: (params) =>
-          getEnumByValue(Object.values(UserRoles), params.row.role as unknown)
-            ?.label,
+          getEnumByValue(Object.values(UserRoles), params.row.role)?.label,
         type: 'singleSelect',
         valueOptions: () => {
           return Object.values(UserRoles);

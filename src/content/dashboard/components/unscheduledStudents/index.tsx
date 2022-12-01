@@ -57,9 +57,7 @@ const UnscheduledStudents = (props) => {
       .reduce((acc, uidArr) => [...acc, ...uidArr], []);
 
     const allStudents = allUsers.filter(
-      (user) =>
-        (user.role as unknown as number) === UserRoles.STUDENT.value &&
-        !user.disabled
+      (user) => user.role === UserRoles.STUDENT.value && !user.disabled
     );
 
     setStudents(

@@ -172,11 +172,7 @@ const ListGroups = () => {
   }, []);
 
   useEffect(() => {
-    setTeachers(
-      users.filter(
-        (user) => (user.role as unknown as number) >= UserRoles.TEACHER.value
-      )
-    );
+    setTeachers(users.filter((user) => user.role >= UserRoles.TEACHER.value));
   }, [users]);
 
   const deleteGroup = React.useCallback(

@@ -3,6 +3,7 @@ import { updateUser as dbUpdateUser } from 'dal/users.dal';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from 'firebaseConfig';
 import { EnumValue } from 'models/enums/enum';
+import { getUserRoleByValue } from 'models/enums/userRoles';
 import Swal from 'sweetalert2';
 import { addUser, createNewUser, removeUser, updateUser } from './users.slice';
 
@@ -18,7 +19,7 @@ usersMiddleware.startListening({
       addUser({
         ...action.payload,
         uid: createdUser.data['uid'],
-        role: action.payload.role as unknown as EnumValue<number>,
+        role: action.payload.role,
         disabled: false
       })
     );

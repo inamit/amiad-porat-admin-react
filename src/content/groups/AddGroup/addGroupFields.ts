@@ -27,7 +27,7 @@ export const addGroupFields: FormFieldType[] = [
     icon: PersonOutlinedIcon,
     type: FieldType.STORE_SELECT,
     select: selectUsers,
-    filter: (user: User) => (user.role as unknown) >= UserRoles.TEACHER.value,
+    filter: (user: User) => user.role >= UserRoles.TEACHER.value,
     map: (user: User) => ({
       value: user.uid,
       label: `${user.firstName} ${user.lastName}`

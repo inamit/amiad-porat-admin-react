@@ -76,11 +76,11 @@ export const selectUserByUid = (id: EntityId) =>
     .selectById(store.getState(), id);
 export const selectUsersGreaterThanRoleForScheduler = (userRole: number) =>
   createSelector(selectUsers, (state) =>
-    mapToScheduler(state.filter((user) => (user.role as unknown) >= userRole))
+    mapToScheduler(state.filter((user) => user.role >= userRole))
   );
 export const selectUsersByRoleForScheduler = (userRole: number) =>
   createSelector(selectUsers, (state) =>
-    mapToScheduler(state.filter((user) => (user.role as unknown) === userRole))
+    mapToScheduler(state.filter((user) => user.role === userRole))
   );
 export const selectUsersLoadStatus = (state: RootState) => state.users.status;
 export const usersReducer = usersSlice.reducer;
