@@ -32,7 +32,6 @@ import {
 import AppointmentView from './AppointmentView';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
-import AppointmentTooltip from './AppointmentTooltip';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import OpenLessons from '../OpenLessons';
 import {
@@ -249,10 +248,6 @@ const ListLessons = (props) => {
     setOpenLessonsOpen(false);
   };
 
-  const AppointmentTooltipWithProps = React.forwardRef((props, ref) => {
-    return <AppointmentTooltip {...props} scheduler={scheduler} />;
-  });
-
   const updateLessonFromScheduler = async (e: AppointmentUpdatingEvent) => {
     scheduler.current.instance.beginUpdate();
     const lesson = e.newData;
@@ -301,10 +296,8 @@ const ListLessons = (props) => {
         onAppointmentFormOpening={onAppointmentFormOpening}
         onAppointmentUpdating={updateLessonFromScheduler}
         onAppointmentClick={openLessonDetails}
-        onAppointmentDblClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
-        appointmentTooltipComponent={AppointmentTooltipWithProps}
         crossScrollingEnabled={true}
         showCurrentTimeIndicator={false}
         remoteFiltering={true}
