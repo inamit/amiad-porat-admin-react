@@ -215,8 +215,9 @@ const LessonDetails = ({
                       !lesson?.students.find(
                         (lessonStudent) =>
                           lessonStudent.student.uid === student.id
-                      )
+                      ) && student.id !== ''
                   )}
+                  getOptionLabel={(option) => option.text}
                   renderInput={(params) => (
                     <TextField {...params} label="הוספת תלמיד לתגבור" />
                   )}

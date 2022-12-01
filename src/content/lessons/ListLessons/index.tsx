@@ -1,7 +1,10 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from 'store/store';
-import { selectRooms, selectSubjects } from 'store/config/config.slice';
+import {
+  selectRoomsForScheduler,
+  selectSubjects
+} from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import {
@@ -42,7 +45,11 @@ import {
   updateLesson
 } from 'store/lessons/lessons.slice';
 import AddLesson from '../AddLesson';
-import { selectUserByUid, selectUsers } from 'store/users/users.slice';
+import {
+  selectUserByUid,
+  selectUsersByRoleForScheduler,
+  selectUsersGreaterThanRoleForScheduler
+} from 'store/users/users.slice';
 import { selectGroups } from 'store/groups/groups.slice';
 import { AppointmentType } from 'models/enums/appointmentType';
 import LessonDetails from './LessonDetails';
@@ -175,40 +182,18 @@ const ListLessons = (props) => {
     }
   ];
 
-  const tutors = useAppSelector(selectUsers)
-    .filter((user) => (user.role as unknown) >= UserRoles.TUTOR.value)
-    .map((user) => {
-      return {
-        id: user.uid,
-        text: `${user.firstName} ${user.lastName}`
-      };
-    });
-  const students = useAppSelector(selectUsers)
-    .filter((user) => (user.role as unknown) === UserRoles.STUDENT.value)
-    .map((user) => ({
-      label: `${user.firstName} ${user.lastName}`,
-      id: user.uid
-    }));
+  const tutors = useAppSelector(
+    selectUsersGreaterThanRoleForScheduler(UserRoles.TUTOR.value)
+  );
+  const students = useAppSelector(
+    selectUsersByRoleForScheduler(UserRoles.STUDENT.value)
+  );
   const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
     color: subject.color.open
   }));
-  const rooms = useAppSelector(selectRooms).map((room) => ({
-    id: room.value,
-    text: room.label
-  }));
-
-  useEffect(() => {
-    if (rooms.filter((room) => room.id === '').length === 0) {
-      rooms.push({ id: '', text: 'לא נבחר' });
-    }
-  }, [rooms]);
-  useEffect(() => {
-    if (tutors.filter((tutor) => tutor.id === '').length === 0) {
-      tutors.push({ id: '', text: 'לא נבחר' });
-    }
-  }, [tutors]);
+  const rooms = useAppSelector(selectRoomsForScheduler);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
     let { startDate, tutorUid, roomId, id, maxStudents, subject } =
