@@ -23,7 +23,11 @@ const AppointmentView = (props) => {
       targetedAppointmentData.type === AppointmentType.GROUP
         ? 'מורה:'
         : 'מתרגל:'
-    } ${user.firstName} ${user.lastName}`;
+    } ${
+      targetedAppointmentData.tutorUid
+        ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`
+        : 'לא נבחר'
+    }`;
   };
 
   return (
