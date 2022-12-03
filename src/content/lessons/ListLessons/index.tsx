@@ -1,7 +1,10 @@
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from 'store/store';
-import { selectRooms, selectSubjects } from 'store/config/config.slice';
+import {
+  selectRoomsForScheduler,
+  selectSubjects
+} from 'store/config/config.slice';
 import { styled } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import {
@@ -29,22 +32,23 @@ import {
 import AppointmentView from './AppointmentView';
 import { AddBox, LibraryAdd } from '@mui/icons-material';
 import AddBulkLessons from '../AddBulkLessons';
-import AppointmentTooltip from './AppointmentTooltip';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import OpenLessons from '../OpenLessons';
 import {
   createBulkLessons,
   loadLessons,
   selectLessonById,
-  selectLessons,
+  selectLessonsForScheduler,
   selectMaxLessonsDate,
   selectMinLessonsDate,
   updateLesson
 } from 'store/lessons/lessons.slice';
 import AddLesson from '../AddLesson';
-import { selectUserByUid, selectUsers } from 'store/users/users.slice';
-import { selectGroups } from 'store/groups/groups.slice';
-import { AppointmentType } from 'models/enums/appointmentType';
+import {
+  selectUsersByRoleForScheduler,
+  selectUsersGreaterThanRoleForScheduler
+} from 'store/users/users.slice';
+import { selectGroupsForScheduler } from 'store/groups/groups.slice';
 import LessonDetails from './LessonDetails';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
@@ -79,76 +83,13 @@ const ListLessons = (props) => {
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
 
   const [data, setData] = React.useState([]);
-  const [mappedGroups, setMappedGroups] = React.useState([]);
-  const [mappedLessons, setMappedLessons] = React.useState([]);
 
-  const groups = useAppSelector(selectGroups);
-  const lessons = useAppSelector(selectLessons);
+  const groups = useAppSelector(selectGroupsForScheduler);
+  const lessons = useAppSelector(selectLessonsForScheduler);
 
   useEffect(() => {
-    setData([...mappedGroups, ...mappedLessons]);
-  }, [mappedGroups, mappedLessons]);
-
-  useEffect(() => {
-    setMappedGroups(
-      groups.map((group) => {
-        const today = new Date();
-
-        let day = 0;
-
-        if (today.getDay() === 7) {
-          day = today.getDate() + group.day;
-        } else if (group.day === 7) {
-          day = today.getDate() - today.getDay();
-        } else {
-          day = today.getDate() - (today.getDay() - group.day);
-        }
-        const [hour, minutes] = group.hour.split(':');
-        const startDate = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          day,
-          parseInt(hour),
-          parseInt(minutes)
-        );
-        const endDate = new Date(startDate);
-        endDate.setHours(endDate.getHours() + 1);
-
-        const groupTeacher = selectUserByUid(group.teacher?.uid);
-
-        return {
-          text: group.name,
-          allDay: false,
-          startDate,
-          endDate,
-          recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
-          disabled: true,
-          tutorUid: group.teacher?.uid,
-          subject: group.subject,
-          type: AppointmentType.GROUP
-        };
-      })
-    );
-  }, [groups]);
-
-  useEffect(() => {
-    setMappedLessons(
-      lessons.map((lesson) => {
-        return {
-          id: lesson.id,
-          startDate: lesson.start,
-          endDate: lesson.end,
-          tutorUid: lesson.tutor?.uid,
-          roomId: lesson.room?.id,
-          subject: lesson.subject,
-          maxStudents: lesson.maxStudents,
-          isOpen: lesson.isOpen,
-          students: lesson.students,
-          type: AppointmentType.LESSON
-        };
-      })
-    );
-  }, [lessons]);
+    setData([...groups, ...lessons]);
+  }, [groups, lessons]);
 
   const actions = [
     {
@@ -175,53 +116,43 @@ const ListLessons = (props) => {
     }
   ];
 
-  const tutors = useAppSelector(selectUsers)
-    .filter((user) => (user.role as unknown) >= UserRoles.TUTOR.value)
-    .map((user) => {
-      return {
-        id: user.uid,
-        text: `${user.firstName} ${user.lastName}`
-      };
-    });
-  const students = useAppSelector(selectUsers)
-    .filter((user) => (user.role as unknown) === UserRoles.STUDENT.value)
-    .map((user) => ({
-      label: `${user.firstName} ${user.lastName}`,
-      id: user.uid
-    }));
+  const tutors = useAppSelector(
+    selectUsersGreaterThanRoleForScheduler(UserRoles.TUTOR.value)
+  );
+  const students = useAppSelector(
+    selectUsersByRoleForScheduler(UserRoles.STUDENT.value)
+  );
   const subjects = useAppSelector(selectSubjects).map((subject) => ({
     id: subject.value,
     text: subject.label,
     color: subject.color.open
   }));
-  const rooms = useAppSelector(selectRooms).map((room) => ({
-    id: room.value,
-    text: room.label
-  }));
-
-  useEffect(() => {
-    if (rooms.filter((room) => room.id === '').length === 0) {
-      rooms.push({ id: '', text: 'לא נבחר' });
-    }
-  }, [rooms]);
-  useEffect(() => {
-    if (tutors.filter((tutor) => tutor.id === '').length === 0) {
-      tutors.push({ id: '', text: 'לא נבחר' });
-    }
-  }, [tutors]);
+  const rooms = useAppSelector(selectRoomsForScheduler);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
-    let { startDate, tutorUid, roomId, id, maxStudents, subject } =
-      e.appointmentData;
     e.cancel = true;
-    setAddLessonProps({
-      id,
-      date: startDate,
-      tutorUid,
-      roomId,
-      maxStudents,
-      subject
-    });
+
+    if (selectedLesson) {
+      setAddLessonProps({
+        id: selectedLesson.id,
+        date: selectedLesson.startDate,
+        tutorUid: selectedLesson.tutorUid,
+        roomId: selectedLesson.roomId,
+        maxStudents: selectedLesson.maxStudents,
+        subject: selectedLesson.subject
+      });
+    } else {
+      let { startDate, tutorUid, roomId, id, maxStudents, subject } =
+        e.appointmentData;
+      setAddLessonProps({
+        id,
+        date: startDate,
+        tutorUid,
+        roomId,
+        maxStudents,
+        subject
+      });
+    }
     setAddLessonOpen(true);
   };
 
@@ -264,24 +195,21 @@ const ListLessons = (props) => {
     setOpenLessonsOpen(false);
   };
 
-  const AppointmentTooltipWithProps = React.forwardRef((props, ref) => {
-    return <AppointmentTooltip {...props} scheduler={scheduler} />;
-  });
-
   const updateLessonFromScheduler = async (e: AppointmentUpdatingEvent) => {
     scheduler.current.instance.beginUpdate();
     const lesson = e.newData;
 
-    let updatedLesson = new Lesson(
-      lesson.id,
-      lesson.startDate,
-      lesson.isOpen,
-      { uid: lesson.tutorUid },
-      selectLessonById(lesson.id).students,
-      lesson.subject,
-      { id: lesson.roomId },
-      lesson.maxStudents
-    );
+    let updatedLesson: Lesson = {
+      id: lesson.id,
+      start: lesson.startDate,
+      end: lesson.endDate,
+      isOpen: lesson.isOpen,
+      tutor: { uid: lesson.tutorUid },
+      students: selectLessonById(lesson.id).students,
+      subject: lesson.subject,
+      room: { id: lesson.roomId },
+      maxStudents: lesson.maxStudents
+    };
     await dispatch(updateLesson(updatedLesson));
     scheduler.current.instance.endUpdate();
   };
@@ -303,6 +231,7 @@ const ListLessons = (props) => {
 
   const closeDetails = () => {
     setLessonDetailsOpen(false);
+    setSelectedLesson({});
   };
 
   return (
@@ -316,10 +245,8 @@ const ListLessons = (props) => {
         onAppointmentFormOpening={onAppointmentFormOpening}
         onAppointmentUpdating={updateLessonFromScheduler}
         onAppointmentClick={openLessonDetails}
-        onAppointmentDblClick={openLessonDetails}
         showAllDayPanel={false}
         appointmentComponent={AppointmentView}
-        appointmentTooltipComponent={AppointmentTooltipWithProps}
         crossScrollingEnabled={true}
         showCurrentTimeIndicator={false}
         remoteFiltering={true}
@@ -385,7 +312,7 @@ const ListLessons = (props) => {
         open={lessonDetailsOpen}
         fullWidth={true}
         onClose={() => {
-          setLessonDetailsOpen(false);
+          closeDetails();
         }}
       >
         <LessonDetails

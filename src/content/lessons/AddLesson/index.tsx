@@ -59,9 +59,9 @@ const AddLesson = (props) => {
       props.scheduler as MutableRefObject<Scheduler>
     ).current.instance.beginUpdate();
     setLoading(true);
-    const lessonObj = new Lesson(
-      lesson.id ?? '',
-      new Date(
+    const lessonObj: Lesson = {
+      id: lesson.id ?? '',
+      start: new Date(
         lesson.date.getFullYear(),
         lesson.date.getMonth(),
         lesson.date.getDate(),
@@ -69,15 +69,18 @@ const AddLesson = (props) => {
         lesson.hour.getMinutes(),
         lesson.hour.getSeconds()
       ),
-      false,
-      { uid: lesson.teacher },
-      [],
-      lesson.subject,
-      { id: lesson.room },
-      typeof lesson.maxStudents === 'string'
-        ? parseInt(lesson.maxStudents)
-        : lesson.maxStudents
-    );
+      end: undefined,
+      isOpen: false,
+      tutor: { uid: lesson.teacher },
+      students: [],
+      subject: lesson.subject,
+      room: { id: lesson.room },
+      maxStudents:
+        typeof lesson.maxStudents === 'string'
+          ? parseInt(lesson.maxStudents)
+          : lesson.maxStudents
+    };
+
     const available = await validateAvailability(lessonObj);
 
     if (available) {
@@ -91,7 +94,7 @@ const AddLesson = (props) => {
     ).current.instance.endUpdate();
   };
 
-  const validateTutorAvailability = async (lesson: Lesson) => {
+  const validateTutorAvailability = async (lesson: Partial<Lesson>) => {
     if (
       !(await isTutorAvailable(
         lesson.start,
@@ -119,7 +122,7 @@ const AddLesson = (props) => {
     return true;
   };
 
-  const validateRoomAvailability = async (lesson: Lesson) => {
+  const validateRoomAvailability = async (lesson: Partial<Lesson>) => {
     if (
       !(await isRoomAvailable(
         lesson.start,
@@ -147,7 +150,7 @@ const AddLesson = (props) => {
     return true;
   };
 
-  const validateAvailability = async (lesson: Lesson) => {
+  const validateAvailability = async (lesson: Partial<Lesson>) => {
     const isTutorAvailable = await validateTutorAvailability(lesson);
     const isRoomAvailable = await validateRoomAvailability(lesson);
 
@@ -191,7 +194,7 @@ const AddLesson = (props) => {
         variant="contained"
         loading={loading}
       >
-        צור שיעור
+        {lesson.id ? 'עדכן' : 'צור'} תגבור
       </LoadingButton>
     </Box>
   );

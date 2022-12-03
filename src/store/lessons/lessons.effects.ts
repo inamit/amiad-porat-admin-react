@@ -1,14 +1,14 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import {
   createMultipleLessons,
-  createNewLessonFromLessonObject,
-  updateLesson as dbUpdateLesson
+  createNewLessonFromLessonObject
 } from 'dal/lessons.dal';
 import {
   addLesson,
   addLessons,
   createBulkLessons,
   createOrUpdateLesson,
+  selectLessonById,
   updateLesson
 } from './lessons.slice';
 
@@ -26,6 +26,9 @@ lessonsMiddleware.startListening({
   actionCreator: createOrUpdateLesson,
   effect: async (action, listenerApi) => {
     if (action.payload.id) {
+      const lesson = selectLessonById(action.payload.id);
+      action.payload.students = lesson.students;
+
       listenerApi.dispatch(updateLesson(action.payload));
     } else {
       const lesson = await createNewLessonFromLessonObject(action.payload);

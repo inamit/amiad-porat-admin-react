@@ -2,33 +2,14 @@ import { getUserRoleByValue, UserRoles } from './enums/userRoles';
 import { FirestoreDataConverter } from 'firebase/firestore';
 import { EnumValue } from './enums/enum';
 
-export default class User {
-  public uid: string;
-  public firstName: string;
-  public lastName: string;
-  public phoneNo: string;
-  public role: EnumValue<number>;
-  public disabled: boolean;
-
+export default interface User {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  phoneNo: string;
+  role: number;
+  disabled: boolean;
   [extraField: string]: any;
-
-  static empty() {
-    return new User('', '', '', '', UserRoles.STUDENT.value);
-  }
-
-  constructor(
-    uid: string,
-    firstName: string,
-    lastName: string,
-    phoneNo: string,
-    role: number
-  ) {
-    this.uid = uid;
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.phoneNo = phoneNo;
-    this.role = getUserRoleByValue(role);
-  }
 }
 
 export const userConverter: FirestoreDataConverter<User> = {
@@ -58,12 +39,13 @@ export const userConverter: FirestoreDataConverter<User> = {
   fromFirestore: (snapshot, options) => {
     const data = snapshot.data(options);
 
-    return new User(
-      snapshot.id,
-      data.firstName,
-      data.lastName,
-      data.phoneNo,
-      data.role
-    );
+    return {
+      uid: snapshot.id,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNo: data.phoneNo,
+      role: data.role,
+      disabled: undefined
+    };
   }
 };

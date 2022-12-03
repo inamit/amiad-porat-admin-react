@@ -1,17 +1,8 @@
-import { FirestoreDataConverter } from "@firebase/firestore";
+import { FirestoreDataConverter } from '@firebase/firestore';
 
-export default class Room {
-  public id: string;
-  public name: string;
-
-  static empty() {
-    return new Room("", "");
-  }
-
-  constructor(id: string, name: string) {
-    this.id = id;
-    this.name = name;
-  }
+export default interface Room {
+  id: string;
+  name: string;
 }
 
 export const roomConverter: FirestoreDataConverter<Room> = {
@@ -21,6 +12,6 @@ export const roomConverter: FirestoreDataConverter<Room> = {
   fromFirestore: (snapshot, options) => {
     const data = snapshot.data(options);
 
-    return new Room(snapshot.id, data.name);
-  },
+    return { id: snapshot.id, name: data.name };
+  }
 };

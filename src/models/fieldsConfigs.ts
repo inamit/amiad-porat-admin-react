@@ -33,7 +33,6 @@ export interface SyncSelectFormField extends SelectFormField {
 
 export interface StoreFormField extends FormField {
   select: (state: RootState) => unknown[];
-  filter?: (entity) => boolean;
   map?: (entity) => unknown;
 }
 

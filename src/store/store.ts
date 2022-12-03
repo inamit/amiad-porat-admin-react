@@ -20,7 +20,8 @@ export const store = configureStore({
       groupsMiddleware.middleware,
       lessonsMiddleware.middleware,
       usersMiddleware.middleware
-    )
+    ),
+  devTools: !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
 });
 
 export type RootState = ReturnType<typeof store.getState>;

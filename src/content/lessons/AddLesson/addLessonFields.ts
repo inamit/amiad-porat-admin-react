@@ -4,7 +4,7 @@ import { UserRoles } from 'models/enums/userRoles';
 import { FormFieldType } from 'models/fieldsConfigs';
 import User from 'models/user';
 import { selectRooms, selectSubjects } from 'store/config/config.slice';
-import { selectUsers } from 'store/users/users.slice';
+import { selectUsersGreaterThanRole } from 'store/users/users.slice';
 import { isDateRequired } from 'validations/dateValidations';
 import { isRequired } from 'validations/stringValidations';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
@@ -44,8 +44,7 @@ export const addLessonFields: FormFieldType[] = [
     placeholder: 'מורה',
     icon: PersonOutlinedIcon,
     type: FieldType.STORE_SELECT,
-    select: selectUsers,
-    filter: (user: User) => (user.role as unknown) >= UserRoles.TUTOR.value,
+    select: selectUsersGreaterThanRole(UserRoles.TUTOR.value),
     map: (user: User) => ({
       value: user.uid,
       label: `${user.firstName} ${user.lastName}`

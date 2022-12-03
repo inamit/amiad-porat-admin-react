@@ -1,13 +1,9 @@
-import { FormField, StoreFormField } from 'models/fieldsConfigs';
+import { FormField } from 'models/fieldsConfigs';
 import React from 'react';
 import { useAppSelector } from 'store/store';
 
 const StoreField = (props) => {
   let children: unknown[] = useAppSelector(props.field.select);
-
-  if (props.field.filter) {
-    children = children.filter(props.field.filter);
-  }
 
   if (props.field.map) {
     children = children.map(props.field.map);

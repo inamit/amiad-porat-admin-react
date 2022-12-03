@@ -2,7 +2,8 @@ import {
   createSlice,
   createAsyncThunk,
   ActionReducerMapBuilder,
-  AsyncThunk
+  AsyncThunk,
+  createSelector
 } from '@reduxjs/toolkit';
 import { getGrades, getRooms, getSubjects } from 'dal/config.dal';
 import { LoadStatus } from 'store/loadStatus';
@@ -53,5 +54,12 @@ export const selectGrades = (state: RootState) => state.config.grades.values;
 export const selectSubjects = (state: RootState) =>
   state.config.subjects.values;
 export const selectRooms = (state: RootState) => state.config.rooms.values;
+export const selectRoomsForScheduler = createSelector(selectRooms, (rooms) => [
+  ...rooms.map((room) => ({
+    id: room.value,
+    text: room.label
+  })),
+  { id: '', text: 'לא נבחר' }
+]);
 
 export default configSlice.reducer;

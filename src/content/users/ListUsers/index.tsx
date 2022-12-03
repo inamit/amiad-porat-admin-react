@@ -47,7 +47,10 @@ import {
   selectUsersLoadStatus,
   updateUser
 } from 'store/users/users.slice';
-import { selectGroups } from 'store/groups/groups.slice';
+import {
+  selectGroups,
+  selectGroupsWithTeachers
+} from 'store/groups/groups.slice';
 import { LoadStatus } from 'store/loadStatus';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
@@ -313,7 +316,7 @@ const ListUsers = () => {
   const grades = useAppSelector(selectGrades);
   const users = useAppSelector(selectUsers);
   const loadStatus = useAppSelector(selectUsersLoadStatus);
-  const groups = useAppSelector(selectGroups);
+  const groups = useAppSelector(selectGroupsWithTeachers);
 
   useEffect(() => {
     setRows(users);
@@ -479,8 +482,7 @@ const ListUsers = () => {
         type: 'singleSelect',
         valueOptions: (params) => {
           return params.row?.role
-            ? (params.row?.role as unknown as number) ===
-              UserRoles.STUDENT.value
+            ? params.row?.role === UserRoles.STUDENT.value
               ? grades
               : []
             : grades;
@@ -493,7 +495,6 @@ const ListUsers = () => {
         width: 250,
         renderEditCell: CustomGroupsEditCell,
         renderCell: (params) => {
-          const groups = selectGroups(store.getState());
           return params.row.group?.map((group) => {
             const groupInfo = groups.find(
               (groupOption) => groupOption.id === group
@@ -518,8 +519,7 @@ const ListUsers = () => {
         width: 100,
         align: 'center',
         renderCell: (params) =>
-          getEnumByValue(Object.values(UserRoles), params.row.role as unknown)
-            ?.label,
+          getEnumByValue(Object.values(UserRoles), params.row.role)?.label,
         type: 'singleSelect',
         valueOptions: () => {
           return Object.values(UserRoles);
