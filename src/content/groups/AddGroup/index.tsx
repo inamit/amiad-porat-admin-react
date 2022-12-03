@@ -27,7 +27,8 @@ const AddGroup = (props: AddGroupProps) => {
     teacher: '',
     subject: '',
     dayInWeek: undefined,
-    hour: undefined
+    hour: undefined,
+    maxStudents: 5
   };
   const [group, setGroup] = React.useState<AddGroupModel>(initialGroup);
   const [validationErrors, setValidationErrors] = React.useState<{

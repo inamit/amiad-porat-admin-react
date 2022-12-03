@@ -4,4 +4,5 @@ export interface AddGroupModel {
   subject: string;
   dayInWeek: number;
   hour: Date;
+  maxStudents: number;
 }

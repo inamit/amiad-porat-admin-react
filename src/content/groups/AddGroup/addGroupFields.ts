@@ -1,11 +1,15 @@
 import { FormFieldType } from 'models/fieldsConfigs';
 import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import { isRequired } from 'validations/stringValidations';
 import { FieldType } from 'models/enums/fieldTypes';
 import { UserRoles } from 'models/enums/userRoles';
 import { RadioGroupDirection } from 'models/enums/radioGroupDirection';
-import { isNumberRequired } from 'validations/numberValidations';
+import {
+  isNumberBetween,
+  isNumberRequired
+} from 'validations/numberValidations';
 import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { isDateRequired } from 'validations/dateValidations';
@@ -60,5 +64,17 @@ export const addGroupFields: FormFieldType[] = [
     type: FieldType.TIME_PICKER,
     required: true,
     validationFunction: isDateRequired
+  },
+  {
+    objectLocation: 'maxStudents',
+    placeholder: 'מספר מקסימלי של תלמידים',
+    icon: PeopleOutlineIcon,
+    type: FieldType.NUMBER,
+    required: true,
+    validationFunction: (value, fieldName) =>
+      isNumberRequired(value, fieldName) &&
+      isNumberBetween(value, fieldName, 0, 20),
+    min: 0,
+    max: 20
   }
 ];
