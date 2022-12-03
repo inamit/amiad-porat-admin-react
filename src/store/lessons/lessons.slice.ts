@@ -1,6 +1,7 @@
 import {
   createAction,
   createAsyncThunk,
+  createSelector,
   createSlice,
   EntityId,
   PayloadAction,
@@ -13,6 +14,7 @@ import {
   changeStudentStatus as dbChangeStudentStatus,
   deleteLessonById as dbDeleteLessonById
 } from 'dal/lessons.dal';
+import { AppointmentType } from 'models/enums/appointmentType';
 import StudentStatus from 'models/enums/studentStatus';
 import Lesson from 'models/lesson';
 import { LoadStatus } from 'store/loadStatus';
@@ -164,6 +166,24 @@ export const selectLessonById = (id: EntityId) =>
   lessonsAdapter
     .getSelectors((state: RootState) => state.lessons.entitiesState)
     .selectById(store.getState(), id);
+export const selectLessonsForScheduler = createSelector(
+  selectLessons,
+  (lessons) =>
+    lessons.map((lesson) => {
+      return {
+        id: lesson.id,
+        startDate: lesson.start,
+        endDate: lesson.end,
+        tutorUid: lesson.tutor?.uid,
+        roomId: lesson.room?.id,
+        subject: lesson.subject,
+        maxStudents: lesson.maxStudents,
+        isOpen: lesson.isOpen,
+        students: lesson.students,
+        type: AppointmentType.LESSON
+      };
+    })
+);
 export const selectMinLessonsDate = (state: RootState) =>
   state.lessons.minLoadedDate;
 export const selectMaxLessonsDate = (state: RootState) =>

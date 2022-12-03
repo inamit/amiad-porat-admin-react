@@ -15,6 +15,7 @@ import { updateGroup as dbUpdateGroup } from 'dal/groups.dal';
 import { selectUsersGreaterThanRole } from 'store/users/users.slice';
 import { UserRoles } from 'models/enums/userRoles';
 import User from 'models/user';
+import { AppointmentType } from 'models/enums/appointmentType';
 
 export const loadGroups = createAsyncThunk('groups/load', () => getAllGroups());
 
@@ -94,6 +95,46 @@ export const selectGroupsWithTeachers = createSelector(
           firstName: teacher?.firstName,
           lastName: teacher?.lastName
         }
+      };
+    });
+  }
+);
+export const selectGroupsForScheduler = createSelector(
+  selectGroupsWithTeachers,
+  (groups) => {
+    return groups.map((group) => {
+      const today = new Date();
+
+      let day = 0;
+
+      if (today.getDay() === 7) {
+        day = today.getDate() + group.day;
+      } else if (group.day === 7) {
+        day = today.getDate() - today.getDay();
+      } else {
+        day = today.getDate() - (today.getDay() - group.day);
+      }
+      const [hour, minutes] = group.hour.split(':');
+      const startDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        day,
+        parseInt(hour),
+        parseInt(minutes)
+      );
+      const endDate = new Date(startDate);
+      endDate.setHours(endDate.getHours() + 1);
+
+      return {
+        text: group.name,
+        allDay: false,
+        startDate,
+        endDate,
+        recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
+        disabled: true,
+        tutorUid: group.teacher?.uid,
+        subject: group.subject,
+        type: AppointmentType.GROUP
       };
     });
   }
