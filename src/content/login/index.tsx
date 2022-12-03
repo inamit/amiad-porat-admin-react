@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   auth,
   logInWithEmailAndPassword,
+  logout,
   sendPasswordReset
 } from '../../firebaseConfig';
 import Joi from 'joi';
@@ -23,6 +24,8 @@ import mask from '../../assets/misc/mask-light.png';
 import tree from '../../assets/misc/tree.png';
 import tree3 from '../../assets/misc/tree-3.png';
 import './login.scss';
+import { getUserByID } from 'dal/users.dal';
+import { UserRoles } from 'models/enums/userRoles';
 
 const MySwal = withReactContent(Swal);
 
@@ -42,7 +45,21 @@ const Login = () => {
       // maybe trigger a loading screen
       return;
     }
-    if (user) navigate((state as any)?.from ?? '/dashboard');
+    if (user) {
+      getUserByID(user.uid).then((userInfo) => {
+        if (userInfo.role === UserRoles.ADMIN.value) {
+          navigate((state as any)?.from ?? '/dashboard');
+        } else {
+          MySwal.fire({
+            icon: 'error',
+            title: 'אוי! נראה שאין לך גישה לכאן',
+            text: 'נפלה טעות? כדאי לדבר עם מנהל המערכת',
+            confirmButtonText: 'אוקיי'
+          });
+          logout();
+        }
+      });
+    }
   }, [user, loading]);
 
   const signIn = async () => {
