@@ -74,14 +74,20 @@ export const selectUserByUid = (id: EntityId) =>
   usersAdapter
     .getSelectors((state: RootState) => state.users.entitiesState)
     .selectById(store.getState(), id);
+export const selectUsersGreaterThanRole = (userRole: number) =>
+  createSelector(selectUsers, (users) =>
+    users.filter((user) => user.role >= userRole)
+  );
+export const selectUsersByRole = (userRole: number) =>
+  createSelector(selectUsers, (users) =>
+    users.filter((user) => user.role === userRole)
+  );
 export const selectUsersGreaterThanRoleForScheduler = (userRole: number) =>
-  createSelector(selectUsers, (state) =>
-    mapToScheduler(state.filter((user) => user.role >= userRole))
+  createSelector(selectUsersGreaterThanRole(userRole), (state) =>
+    mapToScheduler(state)
   );
 export const selectUsersByRoleForScheduler = (userRole: number) =>
-  createSelector(selectUsers, (state) =>
-    mapToScheduler(state.filter((user) => user.role === userRole))
-  );
+  createSelector(selectUsersByRole(userRole), (state) => mapToScheduler(state));
 export const selectUsersLoadStatus = (state: RootState) => state.users.status;
 export const usersReducer = usersSlice.reducer;
 
