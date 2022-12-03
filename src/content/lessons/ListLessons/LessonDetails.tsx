@@ -170,9 +170,14 @@ const LessonDetails = ({
         action={
           data.type === AppointmentType.LESSON ? (
             <div>
-              {/* <IconButton aria-label="edit">
-              <EditIcon sx={{ color: 'white' }} />
-            </IconButton> */}
+              <IconButton
+                aria-label="edit"
+                onClick={() => {
+                  scheduler.current.instance.showAppointmentPopup();
+                }}
+              >
+                <EditIcon sx={{ color: 'white' }} />
+              </IconButton>
               <IconButton
                 aria-label="delete"
                 onClick={async () => {
