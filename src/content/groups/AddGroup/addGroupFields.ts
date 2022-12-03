@@ -10,7 +10,7 @@ import { DaysOfWeek } from 'models/enums/daysOfWeek';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { isDateRequired } from 'validations/dateValidations';
 import { selectSubjects } from 'store/config/config.slice';
-import { selectUsers } from 'store/users/users.slice';
+import { selectUsersGreaterThanRole } from 'store/users/users.slice';
 import User from 'models/user';
 
 export const addGroupFields: FormFieldType[] = [
@@ -26,8 +26,7 @@ export const addGroupFields: FormFieldType[] = [
     placeholder: 'מורה',
     icon: PersonOutlinedIcon,
     type: FieldType.STORE_SELECT,
-    select: selectUsers,
-    filter: (user: User) => user.role >= UserRoles.TEACHER.value,
+    select: selectUsersGreaterThanRole(UserRoles.TEACHER.value),
     map: (user: User) => ({
       value: user.uid,
       label: `${user.firstName} ${user.lastName}`
