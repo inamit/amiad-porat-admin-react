@@ -38,19 +38,17 @@ import {
   createBulkLessons,
   loadLessons,
   selectLessonById,
-  selectLessons,
+  selectLessonsForScheduler,
   selectMaxLessonsDate,
   selectMinLessonsDate,
   updateLesson
 } from 'store/lessons/lessons.slice';
 import AddLesson from '../AddLesson';
 import {
-  selectUserByUid,
   selectUsersByRoleForScheduler,
   selectUsersGreaterThanRoleForScheduler
 } from 'store/users/users.slice';
-import { selectGroups } from 'store/groups/groups.slice';
-import { AppointmentType } from 'models/enums/appointmentType';
+import { selectGroupsForScheduler } from 'store/groups/groups.slice';
 import LessonDetails from './LessonDetails';
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
@@ -85,76 +83,13 @@ const ListLessons = (props) => {
   const [openLessonsOpen, setOpenLessonsOpen] = React.useState<boolean>(false);
 
   const [data, setData] = React.useState([]);
-  const [mappedGroups, setMappedGroups] = React.useState([]);
-  const [mappedLessons, setMappedLessons] = React.useState([]);
 
-  const groups = useAppSelector(selectGroups);
-  const lessons = useAppSelector(selectLessons);
+  const groups = useAppSelector(selectGroupsForScheduler);
+  const lessons = useAppSelector(selectLessonsForScheduler);
 
   useEffect(() => {
-    setData([...mappedGroups, ...mappedLessons]);
-  }, [mappedGroups, mappedLessons]);
-
-  useEffect(() => {
-    setMappedGroups(
-      groups.map((group) => {
-        const today = new Date();
-
-        let day = 0;
-
-        if (today.getDay() === 7) {
-          day = today.getDate() + group.day;
-        } else if (group.day === 7) {
-          day = today.getDate() - today.getDay();
-        } else {
-          day = today.getDate() - (today.getDay() - group.day);
-        }
-        const [hour, minutes] = group.hour.split(':');
-        const startDate = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          day,
-          parseInt(hour),
-          parseInt(minutes)
-        );
-        const endDate = new Date(startDate);
-        endDate.setHours(endDate.getHours() + 1);
-
-        const groupTeacher = selectUserByUid(group.teacher?.uid);
-
-        return {
-          text: group.name,
-          allDay: false,
-          startDate,
-          endDate,
-          recurrenceRule: 'INTERVAL=1;FREQ=WEEKLY',
-          disabled: true,
-          tutorUid: group.teacher?.uid,
-          subject: group.subject,
-          type: AppointmentType.GROUP
-        };
-      })
-    );
-  }, [groups]);
-
-  useEffect(() => {
-    setMappedLessons(
-      lessons.map((lesson) => {
-        return {
-          id: lesson.id,
-          startDate: lesson.start,
-          endDate: lesson.end,
-          tutorUid: lesson.tutor?.uid,
-          roomId: lesson.room?.id,
-          subject: lesson.subject,
-          maxStudents: lesson.maxStudents,
-          isOpen: lesson.isOpen,
-          students: lesson.students,
-          type: AppointmentType.LESSON
-        };
-      })
-    );
-  }, [lessons]);
+    setData([...groups, ...lessons]);
+  }, [groups, lessons]);
 
   const actions = [
     {
@@ -195,17 +130,29 @@ const ListLessons = (props) => {
   const rooms = useAppSelector(selectRoomsForScheduler);
 
   const onAppointmentFormOpening = (e: AppointmentFormOpeningEvent) => {
-    let { startDate, tutorUid, roomId, id, maxStudents, subject } =
-      e.appointmentData;
     e.cancel = true;
-    setAddLessonProps({
-      id,
-      date: startDate,
-      tutorUid,
-      roomId,
-      maxStudents,
-      subject
-    });
+
+    if (selectedLesson) {
+      setAddLessonProps({
+        id: selectedLesson.id,
+        date: selectedLesson.startDate,
+        tutorUid: selectedLesson.tutorUid,
+        roomId: selectedLesson.roomId,
+        maxStudents: selectedLesson.maxStudents,
+        subject: selectedLesson.subject
+      });
+    } else {
+      let { startDate, tutorUid, roomId, id, maxStudents, subject } =
+        e.appointmentData;
+      setAddLessonProps({
+        id,
+        date: startDate,
+        tutorUid,
+        roomId,
+        maxStudents,
+        subject
+      });
+    }
     setAddLessonOpen(true);
   };
 
@@ -284,6 +231,7 @@ const ListLessons = (props) => {
 
   const closeDetails = () => {
     setLessonDetailsOpen(false);
+    setSelectedLesson({});
   };
 
   return (
@@ -364,7 +312,7 @@ const ListLessons = (props) => {
         open={lessonDetailsOpen}
         fullWidth={true}
         onClose={() => {
-          setLessonDetailsOpen(false);
+          closeDetails();
         }}
       >
         <LessonDetails

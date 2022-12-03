@@ -130,7 +130,13 @@ export const updateLesson = async (
   );
 
   await setDoc(lessonRef, updatedLesson);
-  return { id, changes: updatedLesson };
+  return {
+    id,
+    changes: {
+      ...updatedLesson,
+      end: new Date(updatedLesson.start.getTime() + 60 * 60 * 1000)
+    }
+  };
 };
 
 export const addStudentsToLesson = async (
