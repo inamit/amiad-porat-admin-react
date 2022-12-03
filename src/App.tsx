@@ -21,6 +21,17 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from 'firebaseConfig';
 import { loadUsers } from 'store/users/users.slice';
 
+function getFirstDayOfWeek(d) {
+  // 👇️ clone date object, so we don't mutate it
+  const date = new Date(d);
+  const day = date.getDay(); // 👉️ get day of week
+
+  // 👇️ day of month - day of week (-6 if Sunday), otherwise +1
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+
+  return new Date(date.setDate(diff));
+}
+
 const App = () => {
   const content = useRoutes(routes);
   const dispatch = useAppDispatch();
@@ -34,9 +45,10 @@ const App = () => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const firstDay = getFirstDayOfWeek(today);
       const end = new Date(today);
       end.setDate(end.getDate() + 7);
-      dispatch(loadLessons({ startDate: today, endDate: end }));
+      dispatch(loadLessons({ startDate: firstDay, endDate: end }));
     }
   }, [user]);
 
