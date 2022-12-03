@@ -35,7 +35,7 @@ export const configSlice = createSlice({
     addCases(builder, fetchRooms, 'rooms');
 
     builder.addCase(fetchWhatsNew.fulfilled, (state, action) => {
-      state.whatsNew = action.payload;
+      state.whatsNew = action.payload ?? [];
     });
   }
 });

@@ -32,7 +32,9 @@ export const getRooms = async (): Promise<EnumValue<string>[]> => {
 };
 
 export const getWhatsNew = async (): Promise<string[]> => {
-  const whatsNewSnapshot = await getDoc(doc(db, 'whatsNew', '1.0'));
+  const whatsNewSnapshot = await getDoc(
+    doc(db, 'whatsNew', process.env.REACT_APP_VERSION)
+  );
 
   return whatsNewSnapshot.get('value');
 };
