@@ -1,6 +1,7 @@
 import {
   createAction,
   createAsyncThunk,
+  createSelector,
   createSlice,
   PayloadAction
 } from '@reduxjs/toolkit';
@@ -11,6 +12,9 @@ import { LoadStatus } from 'store/loadStatus';
 import { RootState } from 'store/store';
 import { groupsAdapter, initialState } from './groups.model';
 import { updateGroup as dbUpdateGroup } from 'dal/groups.dal';
+import { selectUsersGreaterThanRole } from 'store/users/users.slice';
+import { UserRoles } from 'models/enums/userRoles';
+import User from 'models/user';
 
 export const loadGroups = createAsyncThunk('groups/load', () => getAllGroups());
 
@@ -76,5 +80,23 @@ export const { addGroup, addGroups, removeGroup } = groupsSlice.actions;
 export const selectGroups = groupsAdapter.getSelectors(
   (state: RootState) => state.groups.entitiesState
 ).selectAll;
+export const selectGroupsWithTeachers = createSelector(
+  selectGroups,
+  selectUsersGreaterThanRole(UserRoles.TEACHER.value),
+  (groups, teachers) => {
+    return groups.map((group) => {
+      const teacher: User = teachers.find((t) => t.uid === group.teacher?.uid);
+
+      return {
+        ...group,
+        teacher: {
+          uid: teacher?.uid,
+          firstName: teacher?.firstName,
+          lastName: teacher?.lastName
+        }
+      };
+    });
+  }
+);
 export const selectGroupsLoadStatus = (state: RootState) => state.groups.status;
 export const groupsReducer = groupsSlice.reducer;

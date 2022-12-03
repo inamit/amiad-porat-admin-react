@@ -2,7 +2,7 @@ import { FirestoreDataConverter } from 'firebase/firestore';
 import StudentStatus from './enums/studentStatus';
 import User from './user';
 
-export default class Lesson {
+export default interface Lesson {
   id: string;
   start: Date;
   end: Date;

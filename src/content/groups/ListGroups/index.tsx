@@ -35,12 +35,12 @@ import { getHourStringFromDate } from 'utils/dateUtils';
 import Alert, { AlertProps } from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import {
-  selectGroups,
   selectGroupsLoadStatus,
+  selectGroupsWithTeachers,
   updateGroup
 } from 'store/groups/groups.slice';
 import { LoadStatus } from 'store/loadStatus';
-import { selectUsers } from 'store/users/users.slice';
+import { selectUsersGreaterThanRole } from 'store/users/users.slice';
 
 const StyledGridOverlay = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -135,11 +135,12 @@ const TimeEditComponent = (props: GridRenderEditCellParams<Date>) => {
 const ListGroups = () => {
   const dispatch = useAppDispatch();
   const [addGroupOpen, setAddGroupOpen] = React.useState<boolean>(false);
-  const [teachers, setTeachers] = React.useState<User[]>([]);
   const subjects = useAppSelector(selectSubjects);
-  const groups = useAppSelector(selectGroups);
+  const groups = useAppSelector(selectGroupsWithTeachers);
   const loadingStatus = useAppSelector(selectGroupsLoadStatus);
-  const users = useAppSelector(selectUsers);
+  const teachers = useAppSelector(
+    selectUsersGreaterThanRole(UserRoles.TEACHER.value)
+  );
 
   const [snackbar, setSnackbar] = React.useState<Pick<
     AlertProps,
@@ -170,10 +171,6 @@ const ListGroups = () => {
   const handleProcessRowUpdateError = React.useCallback((error: Error) => {
     setSnackbar({ children: error.message, severity: 'error' });
   }, []);
-
-  useEffect(() => {
-    setTeachers(users.filter((user) => user.role >= UserRoles.TEACHER.value));
-  }, [users]);
 
   const deleteGroup = React.useCallback(
     (id: GridRowId) => () => {
