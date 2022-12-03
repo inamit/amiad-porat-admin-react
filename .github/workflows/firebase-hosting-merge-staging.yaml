@@ -1,5 +1,11 @@
 name: Deploy to Firebase Hosting on merge to staging
 'on':
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: deployment version to present to the user
+        type: string
   push:
     branches:
       - staging
@@ -22,6 +28,7 @@ jobs:
           echo REACT_APP_FIREBASE_APP_ID=${{ secrets.REACT_APP_FIREBASE_APP_ID }} >> .env
           echo REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.REACT_APP_FIREBASE_MEASUREMENT_ID }} >> .env
           echo REACT_APP_RECAPTCHA_KEY=${{ secrets.REACT_APP_RECAPTCHA_KEY }} >> .env
+          echo REACT_APP_VERSION=${{inputs.version}} >> .env
       - run: npm ci && npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:

@@ -6,10 +6,12 @@ export interface ConfigModel {
   grades: ConfigValues;
   subjects: ConfigValues;
   rooms: ConfigValues;
+  whatsNew: string[];
 }
 
 export const initialState: ConfigModel = {
   grades: { values: [], status: LoadStatus.IDLE },
   subjects: { values: [], status: LoadStatus.IDLE },
-  rooms: { values: [], status: LoadStatus.IDLE }
+  rooms: { values: [], status: LoadStatus.IDLE },
+  whatsNew: []
 };
