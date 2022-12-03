@@ -5,7 +5,7 @@ import {
   AsyncThunk,
   createSelector
 } from '@reduxjs/toolkit';
-import { getGrades, getRooms, getSubjects } from 'dal/config.dal';
+import { getGrades, getRooms, getSubjects, getWhatsNew } from 'dal/config.dal';
 import { LoadStatus } from 'store/loadStatus';
 import { RootState } from 'store/store';
 import { ConfigModel, initialState } from './config.model';
@@ -14,12 +14,16 @@ export const fetchConfig = () => (dispatch) => {
   dispatch(fetchGrades());
   dispatch(fetchSubjects());
   dispatch(fetchRooms());
+  dispatch(fetchWhatsNew());
 };
 const fetchGrades = createAsyncThunk('config/fetchGrades', () => getGrades());
 const fetchSubjects = createAsyncThunk('config/fetchSubjects', () =>
   getSubjects()
 );
 const fetchRooms = createAsyncThunk('config/fetchRooms', () => getRooms());
+const fetchWhatsNew = createAsyncThunk('config/fetchWhatsNew', () =>
+  getWhatsNew()
+);
 
 export const configSlice = createSlice({
   name: 'config',
@@ -29,6 +33,10 @@ export const configSlice = createSlice({
     addCases(builder, fetchGrades, 'grades');
     addCases(builder, fetchSubjects, 'subjects');
     addCases(builder, fetchRooms, 'rooms');
+
+    builder.addCase(fetchWhatsNew.fulfilled, (state, action) => {
+      state.whatsNew = action.payload;
+    });
   }
 });
 
@@ -61,5 +69,7 @@ export const selectRoomsForScheduler = createSelector(selectRooms, (rooms) => [
   })),
   { id: '', text: 'לא נבחר' }
 ]);
+
+export const selectWhatsNew = (state: RootState) => state.config.whatsNew;
 
 export default configSlice.reducer;

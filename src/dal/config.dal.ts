@@ -1,4 +1,4 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { EnumValue } from 'models/enums/enum.js';
 import { db } from '../firebaseConfig.js';
 import { roomsCollectioname } from './room.dal';
@@ -29,4 +29,10 @@ export const getRooms = async (): Promise<EnumValue<string>[]> => {
     value: doc.id,
     label: doc.get('name')
   }));
+};
+
+export const getWhatsNew = async (): Promise<string[]> => {
+  const whatsNewSnapshot = await getDoc(doc(db, 'whatsNew', '1.0'));
+
+  return whatsNewSnapshot.get('value');
 };

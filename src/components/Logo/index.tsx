@@ -107,8 +107,12 @@ function Logo() {
 
       <Hidden smDown>
         <LogoTextWrapper>
-          <Tooltip title="גרסה 1.0.0" arrow placement="left">
-            <VersionBadge>1.0</VersionBadge>
+          <Tooltip
+            title={'גרסה ' + process.env.REACT_APP_VERSION}
+            arrow
+            placement="left"
+          >
+            <VersionBadge>{process.env.REACT_APP_VERSION}</VersionBadge>
           </Tooltip>
           <LogoText>עמיעד פורת</LogoText>
         </LogoTextWrapper>
