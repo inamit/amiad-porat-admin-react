@@ -194,7 +194,7 @@ const AddLesson = (props) => {
         variant="contained"
         loading={loading}
       >
-        צור שיעור
+        {lesson.id ? 'עדכן' : 'צור'} תגבור
       </LoadingButton>
     </Box>
   );
