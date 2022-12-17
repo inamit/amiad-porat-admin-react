@@ -3,6 +3,8 @@ import { EnumValue } from 'models/enums/enum.js';
 import { db } from '../firebaseConfig.js';
 import { roomsCollectioname } from './room.dal';
 
+const package_json = require('../../package.json');
+
 const gradesCollectionName = 'grades';
 const subjectsCollectionName = 'subjects';
 
@@ -33,7 +35,7 @@ export const getRooms = async (): Promise<EnumValue<string>[]> => {
 
 export const getWhatsNew = async (): Promise<string[]> => {
   const whatsNewSnapshot = await getDoc(
-    doc(db, 'whatsNew', process.env.REACT_APP_VERSION)
+    doc(db, 'whatsNew', package_json.version)
   );
 
   return whatsNewSnapshot.get('value');
