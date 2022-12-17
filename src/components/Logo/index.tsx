@@ -5,6 +5,8 @@ import { styled } from '@mui/material/styles';
 import logo from '../../assets/logos/amiad_logo_transparent.png';
 import './logo.scss';
 
+const package_json = require('../../../package.json');
+
 const LogoWrapper = styled(Link)(
   ({ theme }) => `
         color: ${theme.palette.text.primary};
@@ -102,17 +104,17 @@ const LogoText = styled(Box)(
 
 function Logo() {
   return (
-    <LogoWrapper to="/overview">
+    <LogoWrapper to="/dashboard">
       <img className="logo" src={logo} alt="logo" />
 
       <Hidden smDown>
         <LogoTextWrapper>
           <Tooltip
-            title={'גרסה ' + process.env.REACT_APP_VERSION}
+            title={'גרסה ' + package_json.version}
             arrow
             placement="left"
           >
-            <VersionBadge>{process.env.REACT_APP_VERSION}</VersionBadge>
+            <VersionBadge>{package_json.version}</VersionBadge>
           </Tooltip>
           <LogoText>עמיעד פורת</LogoText>
         </LogoTextWrapper>
